@@ -31,12 +31,59 @@ CSS = (
     f".turn{{animation:turn {LOOP_S}s linear infinite}}"
 )
 
-# Shapes in profile, facing right, feet on y=0. The wing rises from the shoulder at 0,0.
-WING = ("M0 0C-2 -10 -8 -18 -16 -20C-14 -15 -15 -12 -17 -9C-13 -10 -10 -8 -9 -5"
-        "C-6 -6 -3 -4 -2 -1Z")
-WING_BONES = "M0 0L-16 -20M-0.6 -0.4L-17 -9M-1 -0.2L-9 -5"
-TAIL = ("M-5 -9C-12 -9 -16 -4 -21 -4.5C-24 -5 -25 -8 -23 -10C-23 -7.5 -21 -6.6 -19 -6.8"
-        "C-15 -7 -11 -5.6 -5 -5Z")
+# Shapes in profile, facing right, feet on y=0. The wing rises from the shoulder at 0,0: an
+# arm to the wrist, four finger bones fanning out, and a membrane scalloped between them.
+WING = ("M0 0L-2 -6L-7 -15L-21 -23Q-18 -18 -22.5 -14Q-18 -11.5 -19.5 -7.5Q-15 -6 -13 -2.6"
+        "Q-8 -2.6 -3 0Z")
+WING_INNER = "M0 0L-2 -6L-7 -15L-13 -2.6Q-8 -2.6 -3 0Z"
+WING_ARM = "M0 0L-2 -6L-7 -15"
+WING_FINGERS = "M-7 -15L-21 -23M-7 -15L-22.5 -14M-7 -15L-19.5 -7.5M-7 -15L-13 -2.6"
+
+
+def _bezier(t: float, p: tuple) -> tuple[float, float]:
+    (x0, y0), (x1, y1), (x2, y2), (x3, y3) = p
+    u = 1 - t
+    return (u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x3,
+            u ** 3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y3)
+
+
+def _tail_shapes() -> tuple[str, str, str, str]:
+    """The tail: a long S-curve from the hip that tapers to a diamond blade, with bands
+    across it and spines along its top. Built once from a curve."""
+    curve = ((-4, -8), (-14, -9.5), (-21, 0.5), (-31, -9))
+    n = 14
+    top, bottom, bands, spines = [], [], [], []
+    for k in range(n + 1):
+        t = k / n
+        x, y = _bezier(t, curve)
+        x2, y2 = _bezier(min(1, t + 0.01), curve)
+        x1, y1 = _bezier(max(0, t - 0.01), curve)
+        dx, dy = x2 - x1, y2 - y1
+        ln = (dx * dx + dy * dy) ** 0.5 or 1
+        nx, ny = -dy / ln, dx / ln
+        half = (4.6 * (1 - t) + 0.7) / 2
+        a, b = (x + nx * half, y + ny * half), (x - nx * half, y - ny * half)
+        top.append(a)
+        bottom.append(b)
+        if k in (2, 4, 6, 8, 10):
+            bands.append(f"M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}")
+        if k in (1, 3, 5, 7, 9, 11):
+            up = a if a[1] < b[1] else b
+            spines.append(f"M{up[0] - 0.8:.1f} {up[1]:.1f}l{0.4 - dx / ln:.1f} -2l1.2 1.6z")
+    outline = ("M" + "L".join(f"{x:.1f} {y:.1f}" for x, y in top)
+               + "L" + "L".join(f"{x:.1f} {y:.1f}" for x, y in reversed(bottom)) + "Z")
+    tx, ty = _bezier(1, curve)
+    px, py = _bezier(0.97, curve)
+    dx, dy = tx - px, ty - py
+    ln = (dx * dx + dy * dy) ** 0.5
+    ux, uy, nx, ny = dx / ln, dy / ln, -dy / ln, dx / ln
+    blade = (f"M{tx - ux:.1f} {ty - uy:.1f}L{tx + nx * 2 + ux * 2:.1f} {ty + ny * 2 + uy * 2:.1f}"
+             f"L{tx + ux * 8:.1f} {ty + uy * 8:.1f}"
+             f"L{tx - nx * 2 + ux * 2:.1f} {ty - ny * 2 + uy * 2:.1f}Z")
+    return outline, "".join(bands), "".join(spines), blade
+
+
+TAIL, TAIL_BANDS, TAIL_SPINES, TAIL_BLADE = _tail_shapes()
 TORSO = "M-6 -10C-5 -14 3 -15 6 -12C8 -9 6 -6 2 -5.5C-2 -5 -6 -6 -6 -10Z"
 NECK = "M3.6 -13C6 -18 5 -22 8 -25.2L11 -23.8C9 -21 10 -17 7 -11Z"
 HEAD = "M7 -25.8C9 -28 13 -27.8 17 -25.8L18.6 -24.4C15 -23 12 -22.4 9 -22.6Z"
@@ -57,10 +104,13 @@ def stage(level: int) -> int:
 
 
 def _wing(c: Ctx, beating: bool, delay: float = 0.0) -> str:
-    sheen = c.defs.linear("dragonwing", [(0, _lit(c, "#2fa8b8")), (1, _lit(c, "#5a4a9a"))])
+    sheen = c.defs.linear("dragonwing", [(0, _lit(c, "#3fc0c8")), (1, _lit(c, "#5a4a9a"))])
     w = Layer()
     w.path(WING, sheen, stroke=INK, stroke_width=0.5, opacity=0.95)
-    w.path(WING_BONES, stroke=_lit(c, "#d9b45a"), stroke_width=0.6)
+    w.path(WING_INNER, _lit(c, "#2a2a6a"), opacity=0.35)
+    w.path(WING_FINGERS, stroke=_lit(c, "#d9b45a"), stroke_width=0.6)
+    w.path(WING_ARM, stroke=_lit(c, "#1f5f6e"), stroke_width=1.6, stroke_linecap="round")
+    w.path("M-7 -15l-1.2 -2.6l1.9 1.3z", _lit(c, "#efe6d0"))  # the wrist claw
     cls = f' class="beat" style="animation-delay:-{delay}s"' if beating else ""
     return f"<g{cls}>{w.svg()}</g>"
 
@@ -71,8 +121,10 @@ def _dragon(g: Layer, c: Ctx, flying: bool) -> None:
     scales, gold, horn = _lit(c, "#1f5f6e"), _lit(c, "#d9b45a"), _lit(c, "#efe6d0")
     line = {"stroke": INK, "stroke_width": 0.5}
     g.raw(f'<g transform="translate(1 -12.5)">{_wing(c, True, 0.3)}</g>')  # far wing
+    g.path(TAIL_SPINES, gold)
     g.path(TAIL, scales, **line)
-    g.path("M-23 -10l-3.4 -2.2l1.2 3.6z", gold, **line)  # the tail's blade
+    g.path(TAIL_BANDS, stroke=_lit(c, "#164a56"), stroke_width=0.5)
+    g.path(TAIL_BLADE, gold, **line)
     if flying:
         g.path("M-5 -8.6q-3 1.4 -6 0.6M3 -7q2 1.6 4.6 1.2", stroke=scales, stroke_width=2.2,
                stroke_linecap="round")
@@ -83,6 +135,10 @@ def _dragon(g: Layer, c: Ctx, flying: bool) -> None:
                stroke_width=0.5)
     g.path(TORSO, scales, **line)
     g.path(NECK, scales, **line)
+    # Scales on the flank and up the neck.
+    g.path("M-4.6 -9.6q1 1 2 0M-1.6 -10.6q1 1 2 0M1.4 -11q1 1 2 0M-3.2 -7.4q1 1 2 0"
+           "M-0.2 -8q1 1 2 0M5.4 -15.4q1 .8 1.8 0M6.4 -19q.9 .7 1.6 0", stroke=_lit(c, "#164a56"),
+           stroke_width=0.45)
     g.path("M-3 -6.2C0 -5.4 4 -6 6.4 -9.4C7.6 -13 8.6 -18 9.4 -22.4", stroke=gold,
            stroke_width=1.5)  # belly plates, down the throat
     g.path("M-1 -6h0M2 -6.2h0M5 -7.6h0M7.4 -12h0M8.4 -16h0", stroke=_lit(c, "#a8843a"),
@@ -94,6 +150,8 @@ def _dragon(g: Layer, c: Ctx, flying: bool) -> None:
     g.path(HORNS, horn, **line)
     g.path(HEAD, scales, **line)
     g.path("M10 -23.4C13 -23.2 15.6 -23.8 18 -24.6", stroke=INK, stroke_width=0.4)  # jaw
+    g.path("M9.2 -23.6l-3.4 1.8l3 -.2l-2 1.6l3 -1z", gold)  # frill behind the jaw
+    g.path("M9 -26.6q3 -1.6 6.4 -.6", stroke=INK, stroke_width=0.5)  # brow ridge
     g.circle(17.4, -25.4, 0.3, INK)  # nostril
     # Glowing markings and eye.
     if c.dark:
