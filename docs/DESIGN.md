@@ -46,7 +46,8 @@ out; time, weather, seasons and random events keep it alive between visits.
 The ride's north side is **the Wildwood**: peaks, waterfalls, a ruined arch with glowing
 mushrooms, a pine forest that thickens with your streak, and the **Elder Tree** at its
 heart, which grows taller with your streak and holds a treehouse, a rope swing and
-lanterns, glowing softly at night.
+lanterns, glowing softly at night. Its creatures: a spirit stag with antlers of light, a grazing doe
+and her fawn, rabbits, an owl on the treehouse roof, and fairies flitting through the trees.
 
 1. **Home meadow:** HQ, repo buildings, farm, orchard.
 2. **Philly island:** a mini skyline with City Hall and Boathouse Row.
@@ -66,11 +67,12 @@ and ships are original designs; no characters or ships from existing franchises.
 
 ## Your companion
 
-A baby sky dragon on the HQ roof terrace, next to you and the cat, that grows up with your
-level: **Pip**, a hatchling peeking out of its cracked egg; **Ember** at level 5, a young
-dragon beating its little wings; and **Zephyr** at level 10, grown up, leaving an empty
-nest on the terrace to fly loops around the town. Emerald and gold like the great sky
-dragon, an original design, outlined so it reads at banner size.
+A young sky dragon on the HQ roof terrace that grows up with your level, drawn in profile
+as a proper mythical dragon: deep teal scales with glowing cyan markings and eyes, gold
+belly plates and spines, swept-back ivory horns, a bladed tail and wide teal-to-violet
+wings. **Pip** is still in its egg, a dark scaled egg wrapped in gold with glowing cracks,
+its head breaking through the top; **Ember** at level 5 perches on the terrace beating its
+wings; **Zephyr** at level 10 leaves its nest and flies loops around the town.
 
 ## The Cloudliner
 

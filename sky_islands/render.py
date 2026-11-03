@@ -42,6 +42,8 @@ CSS = (
     "@keyframes smoke{0%{transform:translateY(0);opacity:0}30%{opacity:.5}"
     "100%{transform:translateY(-14px);opacity:0}}"
     "@keyframes spin{to{transform:rotate(360deg)}}"
+    "@keyframes hop{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(-5px)}}"
+    ".hop{animation:hop 2.6s ease-in-out infinite}"
     "@keyframes wake{from{transform:translateX(0) scale(.6);opacity:.5}"
     "to{transform:translateX(-28px) scale(1.5);opacity:0}}"
     ".wake{animation:wake 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}"

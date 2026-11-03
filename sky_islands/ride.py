@@ -165,6 +165,7 @@ def wild_side(L: Layer, c: Ctx) -> None:
     if c.dark:
         c.glow(L, ax + 24, base - 30, 30, "#9fe6ff", 0.5, class_="pulse")
     holidays.wild(L, c, ax + 24, base - 92)
+    _wildlife(L, c, s)
     for k in range(5):
         mx = ax - 20 + k * 9
         cap = "#7fe3ff" if k % 2 else "#c58bff"
@@ -274,6 +275,120 @@ def _elder_tree(L: Layer, c: Ctx, s: Shape) -> None:
         for k in range(8):
             L.circle(x - 60 + (k * 47) % 120, cy - 40 + (k * 31) % 90, 1.2, "#bff4ff",
                      class_="tw", style=f"animation-delay:-{k * 0.5:.1f}s")
+
+
+# ---------------------------------------------------------------- life in the Wildwood
+
+DEER_HEAD_UP = ("M5.6 -15.6L9 -25.4L12.8 -24.6L10 -13Z",
+                "M9.4 -27C11 -28.6 14.4 -28 16.6 -25.4L16.4 -24.2C14 -24.4 11.6 -23.6 9.6 -24.4Z",
+                "M10 -26.6l-3 -2.4l3.6 .2z", (13.2, -26))
+DEER_GRAZING = ("M5.6 -14.6L10.4 -6.6L13.2 -8.4L9.8 -14Z",
+                "M10.4 -7.2C11.6 -8.6 14.6 -6.8 15.8 -3.4L14.8 -2.8C13 -4 11.4 -4.6 10 -5.4Z",
+                "M11 -7.4l-2.4 -2.4l3.4 .4z", (13.6, -5.8))
+ANTLERS = ("M11 -27.6l-1.4 -6l-3 -2.4M9.9 -32.4l2.4 -2.6M12.6 -27.4l1.6 -6.4l3 -1.8"
+           "M14 -32.6l-.4 -3")
+
+
+def _deer(c: Ctx, coat: str, light: str, grazing: bool = False, antlers: str | None = None,
+          spots: bool = False) -> Layer:
+    """A deer in profile facing right, hooves on y=0."""
+    g = Layer()
+    neck, head, ear, (ex, ey) = DEER_GRAZING if grazing else DEER_HEAD_UP
+    for x0, x1 in ((-7, -7.6), (-4.4, -4), (5, 5.4), (7.6, 8)):
+        g.line(x0, -10, x1, 0, pal.shade(coat, 0.8), 1.3)
+    g.ellipse(-10, -15, 1.6, 2.2, light)
+    g.ellipse(0, -13, 10, 5.6, coat)
+    g.ellipse(0, -10.4, 7, 2, light, opacity=0.7)
+    if spots:
+        g.path("M-4 -15h0M-1 -16h0M2 -15h0M-2.6 -13h0M1 -13.4h0", stroke=light,
+               stroke_width=1.2, stroke_linecap="round")
+    g.path(neck, coat)
+    g.path(head, coat)
+    g.path(ear, pal.shade(coat, 0.85))
+    g.circle(ex, ey, 0.5, "#1a1622")
+    if antlers:
+        g.path(ANTLERS, stroke=antlers, stroke_width=1, stroke_linecap="round")
+    return g
+
+
+def _rabbit(c: Ctx) -> Layer:
+    g = Layer()
+    fur = pal.mix(c.lit("#c9b49a"), "#c9b49a", 0.45)
+    g.ellipse(0, -2.6, 3, 2.4, fur)
+    g.circle(2.6, -4.4, 1.7, fur)
+    g.path("M2.4 -5.8l-.6 -4l1.2 .2l.4 3.8zM3.2 -5.8l.4 -3.8l1.1 .4l-.6 3.6z", fur)
+    g.circle(-2.8, -3, 0.9, "#ffffff")
+    g.circle(3.3, -4.6, 0.35, "#1a1622")
+    return g
+
+
+def _owl(c: Ctx) -> Layer:
+    g = Layer()
+    g.path("M-3 -7l-.6 -2.4l1.8 1.4zM3 -7l.6 -2.4l-1.8 1.4z", c.lit("#6a4a3a"))
+    g.ellipse(0, -4, 3, 4, c.lit("#7a5a44"))
+    g.ellipse(0, -5, 2.5, 2, c.lit("#c9a87a"))
+    eye = "#ffd27a" if c.dark else "#e8b440"
+    for dx in (-1.1, 1.1):
+        g.circle(dx, -5.2, 0.8, eye)
+        g.circle(dx, -5.2, 0.35, "#1a1622")
+    if c.dark:
+        c.glow(g, 0, -5.2, 5, "#ffd27a", 0.5)
+    g.path("M0 -4.6l-.4 .8h.8z", c.lit("#e8873a"))
+    return g
+
+
+def _fairy(c: Ctx, col: str) -> str:
+    g = Layer()
+    if c.dark:
+        c.glow(g, 0, 0, 9, col, 0.7)
+    wings = Layer()
+    wings.ellipse(-1.4, -1.6, 1.6, 2.4, "#ffffff", opacity=0.6)
+    wings.ellipse(1.4, -1.6, 1.6, 2.4, "#ffffff", opacity=0.6)
+    g.group(wings, class_="flap")
+    g.circle(0, 0, 1.3, col)
+    g.circle(0, 0, 0.6, "#ffffff")
+    return g.svg()
+
+
+def _wildlife(L: Layer, c: Ctx, s: Shape) -> None:
+    """The Wildwood's creatures: a spirit stag with glowing antlers, a grazing doe and her
+    fawn, rabbits that hop now and then, an owl on the treehouse roof, and fairies flitting
+    round the Elder Tree and through the trees."""
+    def place(g: Layer, x: float, scale: float = 1.0, left: bool = False, **a) -> None:
+        sx = -scale if left else scale
+        L.group(g, transform=f"translate({x:.0f} {s.ground(x) + 5:.1f}) scale({sx} {scale})", **a)
+
+    # The spirit stag: pale, with antlers of light, glowing brighter at night.
+    stag = Layer()
+    if c.dark:
+        c.glow(stag, 4, -20, 34, "#bff4ff", 0.55, class_="pulse")
+    stag.add(_deer(c, pal.mix(c.lit("#eef6ff"), "#eef6ff", 0.6), "#ffffff", antlers="#9ff0ff"))
+    for k, (dx, dy) in enumerate(((8, -38), (16, -36), (12, -42))):
+        stag.circle(dx, dy, 0.8, "#bff4ff", class_="tw", style=f"animation-delay:-{k}s")
+    place(stag, s.cx - 120, 1.5)
+    # Animals keep some of their own colour after dark, so they do not vanish.
+    coat = pal.mix(c.lit("#b07a4a"), "#b07a4a", 0.45)
+    light = pal.mix(c.lit("#ecd2a8"), "#ecd2a8", 0.45)
+    place(_deer(c, coat, light, grazing=True), s.cx + 140, 1.35, left=True)
+    place(_deer(c, coat, light, spots=True), s.cx + 96, 0.85, left=True)
+    for k, x in enumerate((s.cx - 230, s.cx + 210)):
+        place(_rabbit(c), x, 1.7, left=k == 1, class_="hop",
+              style=f"animation-delay:-{k * 1.7:.1f}s")
+    # The owl sits on the treehouse roof (see _elder_tree for where the treehouse is).
+    h = 120 + min(60, c.w.stats.streak_days * 3)
+    base = s.ground(s.cx) + 5
+    L.group(_owl(c), transform=f"translate({s.cx + 54:.0f} {base - h * 0.6 - 48:.1f}) scale(1.5)")
+    # Fairies, each flitting round its own little loop.
+    tree_y = base - h * 0.86
+    spots = ((s.cx - 70, tree_y + 30), (s.cx + 60, tree_y + 10), (s.cx - 20, tree_y - 50),
+             (s.cx + 90, tree_y + 60), (s.cx - 160, s.top - 20), (s.cx + 200, s.top - 30),
+             (s.cx - 260, s.top - 10), (s.cx + 280, s.top - 16), (s.cx + 10, tree_y + 70))
+    cols = ("#ffe08a", "#ff9fd8", "#9ff0ff", "#b6ff9a")
+    for k, (x, y) in enumerate(spots):
+        loop = f"M{x:.0f} {y:.0f}c12 -12 32 -4 26 8c-6 12 -32 8 -26 -8z"
+        L.raw(f'<g><g transform="scale(1.5)">{_fairy(c, cols[k % 4])}</g>'
+              f'<animateMotion dur="{5 + k % 4 * 1.3:.1f}s" repeatCount="indefinite" '
+              f'begin="-{k * 0.9:.1f}s" path="{loop}"/></g>')
 
 
 # ---------------------------------------------------------------- the west side: see serverfarm.py
