@@ -1,0 +1,47 @@
+# Redraws the banner from live GitHub stats every hour and publishes it to the `output`
+# branch. That branch is replaced on every run (one commit, force-pushed), so main does not
+# collect a new 400 KB image every hour.
+name: Redraw banner
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["sky_islands/**", ".github/workflows/banner.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: banner
+  cancel-in-progress: false
+
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Draw the world
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          uv run --no-dev python -m sky_islands live
+          --login "${{ github.repository_owner }}"
+          --out "$RUNNER_TEMP/sky-islands.svg"
+
+      - name: Publish to the output branch
+        run: |
+          git checkout --orphan output
+          git rm -rf --quiet .
+          cp "$RUNNER_TEMP/sky-islands.svg" sky-islands.svg
+          git add sky-islands.svg
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit --quiet -m "Redraw the banner"
+          git push --force origin output
