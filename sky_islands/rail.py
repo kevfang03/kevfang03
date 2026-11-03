@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from . import palette as pal
 from .context import Ctx
 from .island import HOME, PHILLY, STADIUM
 from .progress import Cargo, cargo, consist, level_info
@@ -88,7 +89,8 @@ def _hover_pods(g: Layer, c: Ctx, x0: float, x1: float, y: float, glow: str) -> 
 
 
 def _body(c: Ctx, cars: tuple[str, ...], load: Cargo) -> Layer:
-    """The Skyliner, nose at x=0: a streamlined navy maglev with brass trim, riding on glowing
+    """The Cloudliner, nose at x=0: a streamlined ivory maglev with a sky-blue band and brass
+    trim, riding on glowing
     hover pods instead of wheels. Coaches join as you level up, with passengers in the
     windows; the cargo wagon carries this week's resources; the glass-domed observation car
     brings up the rear. After dark a soft headlight beam fades out ahead of it, and on the
@@ -97,9 +99,15 @@ def _body(c: Ctx, cars: tuple[str, ...], load: Cargo) -> Layer:
     y = 0.0  # drawn on its rail at y=0 and placed by _train
     lamps = c.P["lamps"]
     length = train_length(cars)
-    body = c.defs.linear("liner", [(0, c.lit("#3d74ad")), (0.45, c.lit("#1f4673")),
-                                   (1, c.lit("#112844"))])
-    roof, gold, skirt = c.lit("#e6edf6"), c.lit("#f4c76a"), c.lit("#0c1a30")
+    # Pearl-ivory with a sky-blue band through the windows and brass trim: light enough to
+    # stand out against a dusk or night sky, and its own look rather than any railway's.
+    def pale(col: str) -> str:  # after dark the paint still catches the moonlight
+        return pal.mix(c.lit(col), "#dfe6f4", 0.3) if c.dark else c.lit(col)
+
+    body = c.defs.linear("liner", [(0, pale("#ffffff")), (0.55, pale("#eef1f6")),
+                                   (1, pale("#c3cddd"))])
+    band = c.defs.linear("cloudband", [(0, c.lit("#8fd4f4")), (1, c.lit("#3a9bc8"))])
+    roof, gold, skirt = c.lit("#c9d6e6"), c.lit("#f4c76a"), c.lit("#1d4a6a")
     brass = c.lit("#d9a441")
     glass = "#ffd98a" if lamps else c.lit("#b4dcf8")
     pod_glow = c.defs.radial("podglow", [(0, "#7fe3ff", 0.55), (1, "#7fe3ff", 0)])
@@ -141,8 +149,13 @@ def _body(c: Ctx, cars: tuple[str, ...], load: Cargo) -> Layer:
                        stroke="#ffffff", stroke_width=0.7, opacity=0.5)
                 # A swept brass fin on the roof and winged chevrons on the nose.
                 g.path(f"M{x0 + 9} {top}l5 -4.5h3.4l-1.4 4.5z", brass)
-                g.path(f"M{x1 + 3} {y - 6.4}l3.2 -1.8l3.2 1.8M{x1 + 4.4} {y - 4.8}l1.8 -1l1.8 1",
-                       stroke=gold, stroke_width=0.9)
+                # The Cloudliner's badge: a little cloud on a sky-blue disc, with gold wings.
+                bx, by = x1 + 4.5, y - 7.4
+                g.path(f"M{bx - 2} {by}q-3 -2.6 -5.6 -1.2q2.2 .2 2.6 1.6zM{bx + 2} {by}"
+                       f"q3 -2.6 5.6 -1.2q-2.2 .2 -2.6 1.6z", gold)
+                g.circle(bx, by, 2.3, c.lit("#3a9bc8"))
+                g.path(f"M{bx - 1.4} {by + 0.8}a.9 .9 0 0 1 .6 -1.5a1.2 1.2 0 0 1 2.2 .2"
+                       f"a.8 .8 0 0 1 .1 1.3z", "#ffffff")
                 g.circle(x1 + 11.2, y - 5.2, 1.5, "#fff6d0")
                 if lamps:
                     beam = c.defs.linear("beam", [(0, "#fff3c4", 0.42), (0.35, "#fff3c4", 0.16),
@@ -166,6 +179,9 @@ def _body(c: Ctx, cars: tuple[str, ...], load: Cargo) -> Layer:
                 win_x0 = x0 + 1
             else:
                 g.rect(x0, top, CAR_W, bot - top, body, rx=3)
+            band_x0 = x0 + 1 if kind == "dome" else x0
+            band_x1 = x1 - 9 if kind == "engine" else x1
+            g.rect(band_x0, top + 2.2, band_x1 - band_x0, 5.4, band)
             rx0, rx1 = max(x0, win_x0 - 2), min(x1, win_x1 + 2)
             g.rect(rx0, top - 1.1, rx1 - rx0, 2.2, roof, rx=1.1)
             g.rect(win_x0, top + 3, win_x1 - win_x0, 3.8, glass, rx=1)
@@ -187,10 +203,10 @@ def _body(c: Ctx, cars: tuple[str, ...], load: Cargo) -> Layer:
 
 
 def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = False) -> Layer:
-    """The Skyliner on a rail at height y. It is drawn once and reused by the overview and
+    """The Cloudliner on a rail at height y. It is drawn once and reused by the overview and
     the ride, which keeps the file small; on the move a light streak and a misty wake of
     cloud trail the last car."""
-    ref = c.defs.shape("skyliner", _body(c, cars, load).svg())
+    ref = c.defs.shape("cloudliner", _body(c, cars, load).svg())
     g = Layer()
     if moving:
         length, top = train_length(cars), y - 15

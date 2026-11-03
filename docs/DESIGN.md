@@ -52,7 +52,10 @@ out; time, weather, seasons and random events keep it alive between visits.
 5. **Sky Shrine** (level 8): a torii gate, a shrine hall, stone lanterns and cherry trees, with
    paper lanterns strung under its lip. Home of the sky dragon.
 
-Locked islands float nearby, hazy, with a padlock and the level they open at. All creatures
+Locked islands float nearby, hazy, with a padlock and the level they open at.
+On the ride the Starport and the Shrine float just off the wild side's two ends, in front
+of the forest: a rope bridge crosses to the Starport and a cable car climbs to the Shrine
+(it runs once the Shrine is open). All creatures
 and ships are original designs; no characters or ships from existing franchises.
 
 ## Your companion
@@ -62,10 +65,10 @@ level: **Puff** (a round cloud sprite with a leaf sprout), then **Drift** at lev
 sprite with a cloud tail and a brow crystal), then **Nimbus** at level 10 (winged, hovering, its
 crystal glowing after dark).
 
-## The sky train
+## The Cloudliner
 
-The Skyliner, a navy-and-gold maglev with brass trim that floats on glowing hover pods and
-runs the loop around the islands, with passengers in its windows, a soft headlight beam
+The Cloudliner, a pearl-ivory maglev with a sky-blue band and brass trim that floats on
+glowing hover pods and runs the loop around the islands, with passengers in its windows, a soft headlight beam
 after dark and a misty wake when it moves. It grows with you: the engine,
 one coach per two levels (up to four), a cargo wagon, and from level 4 a glass-domed
 observation car. The cargo wagon carries this week's resources: wheat sacks for contributions
