@@ -108,6 +108,17 @@ circling the islands. Navy and gold; an original design, not any school's logo.
 Palette, island names, pet, figure colours, the decorations shown, and which teams count for
 game days.
 
+## The profile page
+
+The banner sits on top, linked to the repo. Under it, game-style buttons (Dawn, Day, Dusk,
+Night and Lv 10 preview) open pages in `views/`, each showing today's world at that time of
+day, or the same account fully grown at level 10 with a 7-day streak and three starfighters.
+GitHub runs no scripts in a README, so every button is a picture inside a link, and the page
+you are on shows its button pressed. How it all works sits in a collapsed section.
+
+The hourly Action draws the banner and all five views and force-pushes them to the `output`
+branch. The buttons never change, so they live on main (`python -m sky_islands buttons`).
+
 ## Data sources
 
 - **GitHub GraphQL** (Action token): contribution calendar per year, repositories, pull
