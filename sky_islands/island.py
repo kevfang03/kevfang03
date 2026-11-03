@@ -369,22 +369,22 @@ def _roots(L: Layer, c: Ctx, s: Shape, haze: float) -> None:
     for _ in range(int(s.w / 26)):
         x = c.rng.uniform(s.x0 + s.w * 0.15, s.x1 - s.w * 0.15)
         y = s.ground(x) + 14
-        ln = c.rng.uniform(30, 90) * k
+        ln = c.rng.uniform(16, 46) * k  # a fringe under the lip, not cables down the cliff
         bend = c.rng.uniform(-10, 10) * k
         L.path(f"M{x:.0f} {y:.0f}q{bend:.0f} {ln * 0.5:.0f} {bend * 0.4:.0f} {ln:.0f}",
                stroke=vine if c.rng.random() < 0.6 else root,
                stroke_width=c.rng.uniform(1, 2.2) * (0.5 + k / 2),
-               stroke_linecap="round", opacity=0.85)
+               stroke_linecap="round", opacity=0.75)
         if c.rng.random() < 0.5:
             L.circle(x + bend * 0.4, y + ln, 1.6 * (0.5 + k / 2), vine)
     for side in (-1, 1):
         x = s.cx + side * s.w * 0.36
         y = s.ground(x) + 22 * k
-        L.path(f"M{x:.0f} {y:.0f}c{side * 18 * k:.0f} {20 * k:.0f} {side * 4 * k:.0f} "
-               f"{50 * k:.0f} {side * 22 * k:.0f} {80 * k:.0f}",
+        L.path(f"M{x:.0f} {y:.0f}c{side * 12 * k:.0f} {12 * k:.0f} {side * 3 * k:.0f} "
+               f"{28 * k:.0f} {side * 14 * k:.0f} {44 * k:.0f}",
                stroke=root, stroke_width=1 + 2 * k, stroke_linecap="round")
-        L.path(f"M{x + side * 8 * k:.0f} {y + 30 * k:.0f}q{side * 10 * k:.0f} {10 * k:.0f} "
-               f"{side * 6 * k:.0f} {30 * k:.0f}",
+        L.path(f"M{x + side * 6 * k:.0f} {y + 18 * k:.0f}q{side * 8 * k:.0f} {8 * k:.0f} "
+               f"{side * 5 * k:.0f} {18 * k:.0f}",
                stroke=root, stroke_width=0.6 + 0.8 * k, stroke_linecap="round")
 
 

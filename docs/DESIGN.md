@@ -47,7 +47,8 @@ The ride's north side is **the Wildwood**: peaks, waterfalls, a ruined arch with
 mushrooms, a pine forest that thickens with your streak, and the **Elder Tree** at its
 heart, which grows taller with your streak and holds a treehouse, a rope swing and
 lanterns, glowing softly at night. Its creatures: a spirit stag with antlers of light, a grazing doe
-and her fawn, rabbits, an owl on the treehouse roof, and fairies flitting through the trees.
+and her fawn, rabbits, a red fox, a squirrel at the roots, an owl on the treehouse roof, and
+fairies flitting through the trees.
 
 1. **Home meadow:** HQ, repo buildings, farm, orchard.
 2. **Philly island:** a mini skyline with City Hall and Boathouse Row.
@@ -125,7 +126,7 @@ The header names whatever rare or dated event is happening, rarest first:
 | Dragon flyover | every loop while your streak is 7 days or more, during the Wildwood stop |
 | Starfighter squadron | every loop, as the overview opens |
 | Golden "shiny" dragon | about 1 in 200 redraws; flies even without a streak |
-| Sky whale and calf | every overview, gliding far behind the islands; glowing spots at night |
+| Sky whale and calf | every overview, gliding far behind the islands; glowing spots at night. On the ride another pair drifts over the stadium side, one swims the Wildwood's star river and one crosses the Server Farm sunset |
 | Sky jellies | always, rising out of the cloud sea between islands; lit up at night |
 | Cargo airship | always, drifting over the Server Farm's sunset on the ride |
 | Meteor shower | real dates (Perseids around Aug 12, Geminids around Dec 14) |

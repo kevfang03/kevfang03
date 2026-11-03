@@ -279,33 +279,56 @@ def _elder_tree(L: Layer, c: Ctx, s: Shape) -> None:
 
 # ---------------------------------------------------------------- life in the Wildwood
 
-DEER_HEAD_UP = ("M5.6 -15.6L9 -25.4L12.8 -24.6L10 -13Z",
-                "M9.4 -27C11 -28.6 14.4 -28 16.6 -25.4L16.4 -24.2C14 -24.4 11.6 -23.6 9.6 -24.4Z",
-                "M10 -26.6l-3 -2.4l3.6 .2z", (13.2, -26))
-DEER_GRAZING = ("M5.6 -14.6L10.4 -6.6L13.2 -8.4L9.8 -14Z",
-                "M10.4 -7.2C11.6 -8.6 14.6 -6.8 15.8 -3.4L14.8 -2.8C13 -4 11.4 -4.6 10 -5.4Z",
-                "M11 -7.4l-2.4 -2.4l3.4 .4z", (13.6, -5.8))
-ANTLERS = ("M11 -27.6l-1.4 -6l-3 -2.4M9.9 -32.4l2.4 -2.6M12.6 -27.4l1.6 -6.4l3 -1.8"
-           "M14 -32.6l-.4 -3")
+# Animals in profile facing right, feet on y=0, each body a single silhouette so it reads
+# cleanly at banner size: slim legs with real joints (a deer's hind leg bends back at the
+# hock), a deep chest, big ears.
+_DEER_REAR = ("L7.9 -6.2L7.3 0H6.2L6.4 -6L5.8 -10.4L4.7 -10.5L4.5 -5.8L4.9 0H3.8L3.4 -5.8"
+              "L3.2 -10.6C0 -10.9 -3 -10.7 -5 -11L-5.3 -7.4L-4.4 -3L-4.5 0H-5.5L-5.8 -3"
+              "L-7 -6.6L-7.2 -10.6L-7.8 -7L-7 -3L-7.1 0H-8.1L-8.4 -3L-9.6 -7L-10 -11.4Z")
+DEER_UP = ("M-9 -14C-9.6 -16.6 -5 -18 1.6 -17.6C4.6 -17.4 6.8 -18 8.4 -20.6L10.6 -26.2"
+           "C11.2 -27.6 12.6 -27.8 13.4 -26.8L16.6 -23.8C16.8 -23 16.2 -22.6 15.4 -22.8"
+           "L12.6 -23.4C11.6 -21 10.6 -18 9.8 -15.6C9.4 -13.2 8.6 -11.6 7.6 -11" + _DEER_REAR)
+DEER_GRAZE = ("M-9 -14C-9.6 -16.6 -5 -18 1.6 -17.6C4.6 -17.4 6.8 -18 8.4 -19.6L13.2 -7.2"
+              "C13.8 -6 14.6 -4 15.4 -1.8L14.4 -1C13.4 -2.2 12.6 -3.4 11.6 -4.2"
+              "C10.6 -7 9.8 -10 9.2 -11.8L7.6 -11" + _DEER_REAR)
+EARS_UP = "M11.4 -26.6l-3.2 -2.4l3.6 .2zM12.2 -27l-1.8 -3l2.6 1.4z"
+EARS_GRAZE = "M12.8 -7.2l-3 -1.8l3.4 -.4z"
+ANTLERS = ("M11.6 -27.4l-1 -5.6l-2.8 -2.2M10.8 -31.2l2 -2.6M12.6 -27.2l1.4 -5.8l2.8 -1.6"
+           "M13.8 -31.4l-.2 -2.8")
+RABBIT = ("M-4.4 0C-5.4 -2.4 -4.6 -5.2 -1.6 -5.8C.4 -6.2 1.8 -5.6 2.4 -4.6C2.8 -6 3.6 -7 4.8 -7"
+          "C6.2 -7 7 -6 6.8 -4.8C6.6 -3.8 5.8 -3.4 4.8 -3.4C4.4 -2 3.6 -.8 2.6 0Z"
+          "M4.2 -6.6C3.6 -9 3.6 -11 4.4 -11.4C5 -11 5 -9 4.8 -6.8Z"
+          "M5.2 -6.8C5.4 -9.2 6.2 -10.8 6.8 -10.8C7.2 -10.2 6.4 -8.4 5.8 -6.6Z")
+FOX = ("M-3 0C-4.4 -3 -4 -7 -1.6 -9C-.6 -9.8 .6 -10 1.6 -9.6L2.4 -12.4L3.6 -10.8L5 -12.6"
+       "L5.6 -10.2C6.4 -9.6 7.6 -9 9 -8.6C8.6 -7.6 7.4 -7.2 6 -7.4C5.2 -6 4.2 -4.4 3.6 -2.6"
+       "L4 0Z")
+FOX_TAIL = ("M-3 -.6C-7 -.4 -9.4 -2.6 -9 -5.4C-8.6 -7.4 -6.6 -7.6 -6 -6C-6.8 -5.4 -6.6 -3.8"
+            "-5 -3C-3.8 -2.4 -2.4 -2.4 -1.4 -1.6Z")
+SQUIRREL = ("M-1 0C-2.4 -1.6 -2 -4.4 0 -5.2C1.2 -5.6 2.4 -5.2 3 -4.2C3.8 -4.6 4.8 -4.2 4.8 -3.2"
+            "C4.8 -2.4 4 -2 3.2 -2.2C3 -1 2.4 -.2 1.6 0Z")
+SQUIRREL_TAIL = ("M-1 -1C-4.6 -1.6 -6 -5 -4.8 -8C-3.6 -10.6 -.6 -10.8 0 -8.6C-1.6 -8.8 -2.8 -7.4"
+                 "-2.2 -5.6C-1.8 -4.2 -.8 -3.2 0 -2.6Z")
+
+
+def _keep(c: Ctx, col: str) -> str:
+    """Animals keep some of their own colour after dark, so they do not vanish."""
+    return pal.mix(c.lit(col), col, 0.45)
 
 
 def _deer(c: Ctx, coat: str, light: str, grazing: bool = False, antlers: str | None = None,
           spots: bool = False) -> Layer:
     """A deer in profile facing right, hooves on y=0."""
     g = Layer()
-    neck, head, ear, (ex, ey) = DEER_GRAZING if grazing else DEER_HEAD_UP
-    for x0, x1 in ((-7, -7.6), (-4.4, -4), (5, 5.4), (7.6, 8)):
-        g.line(x0, -10, x1, 0, pal.shade(coat, 0.8), 1.3)
-    g.ellipse(-10, -15, 1.6, 2.2, light)
-    g.ellipse(0, -13, 10, 5.6, coat)
-    g.ellipse(0, -10.4, 7, 2, light, opacity=0.7)
+    g.path("M-9.6 -15.6q-1.6 .4 -1.4 2.4q1 -.6 1.6 -1.4z", light)  # the white tail
+    g.path(DEER_GRAZE if grazing else DEER_UP, coat)
+    g.path("M-5 -11.2C-2 -10.6 2 -10.6 7.6 -11.2C5 -12.4 -2 -12.4 -5 -11.2Z", light,
+           opacity=0.7)
+    g.path(EARS_GRAZE if grazing else EARS_UP, pal.shade(coat, 0.85))
     if spots:
-        g.path("M-4 -15h0M-1 -16h0M2 -15h0M-2.6 -13h0M1 -13.4h0", stroke=light,
+        g.path("M-4 -15h0M-1 -16h0M2 -15h0M-2.6 -13.4h0M1 -13.6h0", stroke=light,
                stroke_width=1.2, stroke_linecap="round")
-    g.path(neck, coat)
-    g.path(head, coat)
-    g.path(ear, pal.shade(coat, 0.85))
-    g.circle(ex, ey, 0.5, "#1a1622")
+    ex, ey = (14.2, -4.6) if grazing else (13.4, -25.4)
+    g.circle(ex, ey, 0.55, "#1a1622")
     if antlers:
         g.path(ANTLERS, stroke=antlers, stroke_width=1, stroke_linecap="round")
     return g
@@ -313,12 +336,37 @@ def _deer(c: Ctx, coat: str, light: str, grazing: bool = False, antlers: str | N
 
 def _rabbit(c: Ctx) -> Layer:
     g = Layer()
-    fur = pal.mix(c.lit("#c9b49a"), "#c9b49a", 0.45)
-    g.ellipse(0, -2.6, 3, 2.4, fur)
-    g.circle(2.6, -4.4, 1.7, fur)
-    g.path("M2.4 -5.8l-.6 -4l1.2 .2l.4 3.8zM3.2 -5.8l.4 -3.8l1.1 .4l-.6 3.6z", fur)
-    g.circle(-2.8, -3, 0.9, "#ffffff")
-    g.circle(3.3, -4.6, 0.35, "#1a1622")
+    g.path(RABBIT, _keep(c, "#b8a088"))
+    g.circle(-4.4, -2.6, 1.1, "#ffffff")
+    g.circle(5.6, -5.4, 0.4, "#1a1622")
+    return g
+
+
+def _fox(c: Ctx) -> Layer:
+    """A red fox sitting with its tail curled round its feet."""
+    g = Layer()
+    fur, white = _keep(c, "#d9692a"), _keep(c, "#f6efe4")
+    g.path(FOX_TAIL, fur)
+    g.path("M-9 -5.4C-8.6 -7.4 -6.6 -7.6 -6 -6C-7 -6 -7.8 -5.6 -9 -5.4Z", white)
+    g.path(FOX, fur)
+    g.path("M3.6 -7.6C5 -7 5.6 -6.4 5.2 -5C4.6 -3.6 3.8 -2.4 3.4 -1.4C2.6 -3.4 2.8 -5.6 3.6 -7.6Z",
+           white)
+    g.path("M1 -.2v-2.2M2.6 -.2v-2.2", stroke=_keep(c, "#3a2418"), stroke_width=0.9)
+    g.path("M2.5 -12.1l.5 -.8l.6 1.2zM4.9 -12.3l.4 -.9l.5 1.3z", _keep(c, "#3a2418"))
+    g.circle(6.4, -9.2, 0.45, "#1a1622")
+    g.circle(9, -8.6, 0.45, "#1a1622")
+    return g
+
+
+def _squirrel(c: Ctx) -> Layer:
+    """A squirrel sitting up with a bushy tail and an acorn."""
+    g = Layer()
+    fur = _keep(c, "#a85a32")
+    g.path(SQUIRREL_TAIL, fur)
+    g.path(SQUIRREL, fur)
+    g.path("M3.2 -5l.2 -1.4l.8 1.2z", fur)
+    g.circle(3.6, -3.6, 0.35, "#1a1622")
+    g.ellipse(3.4, -1.4, 0.8, 1, _keep(c, "#8a6a3a"))
     return g
 
 
@@ -352,8 +400,8 @@ def _fairy(c: Ctx, col: str) -> str:
 
 def _wildlife(L: Layer, c: Ctx, s: Shape) -> None:
     """The Wildwood's creatures: a spirit stag with glowing antlers, a grazing doe and her
-    fawn, rabbits that hop now and then, an owl on the treehouse roof, and fairies flitting
-    round the Elder Tree and through the trees."""
+    fawn, rabbits that hop now and then, a fox, a squirrel at the Elder Tree's roots, an owl
+    on the treehouse roof, and fairies flitting round the tree and through the forest."""
     def place(g: Layer, x: float, scale: float = 1.0, left: bool = False, **a) -> None:
         sx = -scale if left else scale
         L.group(g, transform=f"translate({x:.0f} {s.ground(x) + 5:.1f}) scale({sx} {scale})", **a)
@@ -366,14 +414,14 @@ def _wildlife(L: Layer, c: Ctx, s: Shape) -> None:
     for k, (dx, dy) in enumerate(((8, -38), (16, -36), (12, -42))):
         stag.circle(dx, dy, 0.8, "#bff4ff", class_="tw", style=f"animation-delay:-{k}s")
     place(stag, s.cx - 120, 1.5)
-    # Animals keep some of their own colour after dark, so they do not vanish.
-    coat = pal.mix(c.lit("#b07a4a"), "#b07a4a", 0.45)
-    light = pal.mix(c.lit("#ecd2a8"), "#ecd2a8", 0.45)
+    coat, light = _keep(c, "#b07a4a"), _keep(c, "#ecd2a8")
     place(_deer(c, coat, light, grazing=True), s.cx + 140, 1.35, left=True)
     place(_deer(c, coat, light, spots=True), s.cx + 96, 0.85, left=True)
     for k, x in enumerate((s.cx - 230, s.cx + 210)):
-        place(_rabbit(c), x, 1.7, left=k == 1, class_="hop",
+        place(_rabbit(c), x, 1.8, left=k == 1, class_="hop",
               style=f"animation-delay:-{k * 1.7:.1f}s")
+    place(_fox(c), s.cx + 300, 2.0, left=True)
+    place(_squirrel(c), s.cx - 34, 1.8)
     # The owl sits on the treehouse roof (see _elder_tree for where the treehouse is).
     h = 120 + min(60, c.w.stats.streak_days * 3)
     base = s.ground(s.cx) + 5
@@ -410,6 +458,10 @@ def backdrop(L: Layer, c: Ctx) -> None:
         L.ellipse(at(1) + dx, y, r, r * 0.22, col, opacity=0.6)
         L.path(f"M{at(1) + dx - r} {y}Q{at(1) + dx} {y + r * 1.5} {at(1) + dx + r} {y}Z", col,
                opacity=0.6)
+    pod = (f'<g transform="scale(.42)">{creatures.whale(c, c.dark).svg()}</g>'
+           f'<g transform="translate(-46 16) scale(.2)">{creatures.whale(c, c.dark).svg()}</g>')
+    L.raw(f'<g opacity=".55" transform="translate({at(1) + 60:.0f} 92)"><g class="drift" '
+          f'style="animation-duration:46s">{pod}</g></g>')
     for k, (dx, y, col) in enumerate(((-160, 140, "#e2574c"), (40, 110, "#3d9bd1"),
                                       (180, 170, "#e8b440"))):
         b = Layer()
@@ -424,9 +476,10 @@ def backdrop(L: Layer, c: Ctx) -> None:
         L.group(b, class_="drift", style=f"animation-delay:-{k * 9}s", opacity=0.85)
     # Wild side: night creeps in, with a nebula, a river of stars and a sky whale.
     x = at(2)
-    L.rect(x - 520, 0, 1040, H, c.defs.linear("wildsky", [(0, "#0a0620", 0), (0.25, "#0a0620", 0.75),
-                                                          (0.75, "#0a0620", 0.75), (1, "#0a0620", 0)],
-                                              x2=1, y2=0))
+    # Night fades in over a long stretch either side, so it never shows as an edge.
+    L.rect(x - 820, 0, 1640, H, c.defs.linear("wildsky", [
+        (0, "#0a0620", 0), (0.38, "#0a0620", 0.7), (0.62, "#0a0620", 0.7), (1, "#0a0620", 0)],
+        x2=1, y2=0))
     for k, col in enumerate(("#c04aff", "#3ad1ff", "#ff6ab4", "#7a6aff")):
         L.ellipse(x - 300 + k * 190, 140 + (k % 2) * 70, 170, 60, col, opacity=0.18,
                   filter=c.defs.blur(28))
@@ -453,7 +506,10 @@ def backdrop(L: Layer, c: Ctx) -> None:
     L.poly([(x - 640, 420), (x - 500, 400), (x - 380, 300), (x - 260, 360), (x - 120, 280),
             (x + 20, 350), (x + 160, 290), (x + 320, 360), (x + 560, 330), (x + 720, 420)],
            c.haze(c.P["rock"][0], 0.55), opacity=0.8)
-    # A cargo airship heading home into the sunset.
+    # A sky whale crossing the sunset, and a cargo airship heading home into it.
+    L.raw(f'<g opacity=".45"><g transform="scale(-.34 .34)">{creatures.whale(c, False).svg()}'
+          f'</g><animateMotion dur="52s" repeatCount="indefinite" '
+          f'path="M{x + 420:.0f} 96Q{x + 120:.0f} 70 {x - 380:.0f} 110"/></g>')
     L.raw(f'<g transform="translate({x - 150:.0f} 150) scale(.8)"><g class="drift">'
           f'{creatures.airship(c).svg()}</g></g>')
 
