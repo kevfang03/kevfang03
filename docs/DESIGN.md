@@ -43,6 +43,11 @@ out; time, weather, seasons and random events keep it alive between visits.
 
 ## Islands (unlock by XP, linked by bridges and a sky rail)
 
+The ride's north side is **the Wildwood**: peaks, waterfalls, a ruined arch with glowing
+mushrooms, a pine forest that thickens with your streak, and the **Elder Tree** at its
+heart, which grows taller with your streak and holds a treehouse, a rope swing and
+lanterns, glowing softly at night.
+
 1. **Home meadow:** HQ, repo buildings, farm, orchard.
 2. **Philly island:** a mini skyline with City Hall and Boathouse Row.
 3. **Stadium island:** dark most days; lit up on game days.
@@ -53,19 +58,19 @@ out; time, weather, seasons and random events keep it alive between visits.
    paper lanterns strung under its lip. Home of the sky dragon.
 
 Locked islands float nearby, hazy, with a padlock and the level they open at.
-On the ride the Starport and the Shrine float just off the wild side's two ends, in front
-of the forest: a rope bridge crosses to the Starport and a cable car climbs to the Shrine
-(it runs once the Shrine is open). All creatures
+On the ride the Starport and the Shrine float free in the open sky between stops, above
+the bridges the train crosses: the Starport between the stadium and the Wildwood, the
+Shrine between the Wildwood and the Server Farm. Once open, a starfighter lifts off the
+Starport and petals blow off the Shrine as the train passes under them. All creatures
 and ships are original designs; no characters or ships from existing franchises.
 
 ## Your companion
 
-An original sky kitsune on the HQ roof terrace, next to you and the cat, that grows more
-tails as you level up: **Puff** (a round kit with one tail and a leaf on its head), then
-**Drift** at level 5 (three tails, a brow crystal and a wisp of blue fox-fire), then
-**Nimbus** at level 10 (nine tails rising like a crown; it hovers with fox-fire circling it
-and its crystal glows after dark). Snowy cream fur with sky-blue tail tips, peach ears and
-gold markings, outlined so it reads at banner size.
+A baby sky dragon on the HQ roof terrace, next to you and the cat, that grows up with your
+level: **Pip**, a hatchling peeking out of its cracked egg; **Ember** at level 5, a young
+dragon beating its little wings; and **Zephyr** at level 10, grown up, leaving an empty
+nest on the terrace to fly loops around the town. Emerald and gold like the great sky
+dragon, an original design, outlined so it reads at banner size.
 
 ## The Cloudliner
 
@@ -84,7 +89,7 @@ there, and a sign over each platform shows the number that builds that place:
 | Station | While the train waits | Sign |
 |---|---|---|
 | Stadium | fireworks over the stands; while locked, a glint on the padlock | all-time contributions, or how many to go |
-| Wild side | sky jellies rise past the forest, the dragon flies over; once open, a starfighter lifts off the Starport and petals blow off the Shrine | current streak |
+| Wildwood | sky jellies rise past the forest and its Elder Tree, the dragon flies over | current streak |
 | Server Farm | a drone lowers a crate into the cargo wagon | contributions this year |
 
 The town's station master waves the train off and back in.
@@ -115,7 +120,7 @@ The header names whatever rare or dated event is happening, rarest first:
 | Shooting stars | most clear nights |
 | Sky train between islands | always, about once a minute |
 | Airship arrivals | one per pull request merged this week |
-| Dragon flyover | every loop while your streak is 7 days or more, during the wild-side stop |
+| Dragon flyover | every loop while your streak is 7 days or more, during the Wildwood stop |
 | Starfighter squadron | every loop, as the overview opens |
 | Golden "shiny" dragon | about 1 in 200 redraws; flies even without a streak |
 | Sky whale and calf | every overview, gliding far behind the islands; glowing spots at night |

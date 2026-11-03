@@ -1,14 +1,13 @@
-"""Your companion: a little sky kitsune that lives on the HQ's roof terrace and grows more
-tails as you level up. An original design in three forms, facing right:
+"""Your companion: a baby sky dragon that lives on the HQ's roof terrace and grows up as you
+level. An original design, emerald and gold like the great sky dragon that flies over on
+streak days, in three forms facing right:
 
-1. Puff: a round kit with one fluffy tail and a leaf on its head (the shape-shifting leaf
-   of kitsune stories).
-2. Drift: three tails, a crystal on its brow, and a wisp of blue fox-fire beside it.
-3. Nimbus: nine tails fanned out like a halo; it hovers beside the terrace with fox-fire
-   circling it, and its crystal glows after dark.
+1. Pip: a hatchling peeking out of its cracked egg, a bit of shell still on its head.
+2. Ember: a young dragon standing on the terrace, beating its little wings.
+3. Zephyr: grown up. It leaves an empty nest on the terrace and flies loops around the town,
+   turning to face the way it is going.
 
-Snowy cream fur with sky-blue tail tips, peach ears and gold markings, outlined so it stays
-readable at the banner's small size.
+Outlined so it stays readable at the banner's small size.
 """
 
 from __future__ import annotations
@@ -18,17 +17,23 @@ from .context import Ctx
 from .progress import EVOLVE_LEVELS
 from .svg import Layer
 
-NAMES = ("Puff", "Drift", "Nimbus")
-INK = "#3a2e48"  # the outline
-# A plump tail that sweeps up at the end, and its sky-blue tip.
-TAIL = "M0 0C3 -4 8 -8.5 12.5 -8C16.5 -7.5 18 -3.5 15.5 -0.5C12.5 2.5 5 2.5 0 0Z"
-TIP = "M12.5 -8C16.5 -7.5 18 -3.5 15.5 -0.5C14.6 0.4 13.4 0.9 12.2 1C13.4 -2 13.6 -5 12.5 -8Z"
-FIRE = "M0 0C-2.4 -2 -1.8 -5.4 0 -8C1.8 -5.4 2.4 -2 0 0Z"
+NAMES = ("Pip", "Ember", "Zephyr")
+INK = "#1f3a2c"  # the outline
+LOOP_S = 18  # one loop of the grown dragon's flight round the town
+
+CSS = (
+    "@keyframes beat{from{transform:rotate(-14deg)}to{transform:rotate(12deg)}}"
+    ".beat{animation:beat .5s ease-in-out infinite alternate;transform-box:fill-box;"
+    "transform-origin:100% 100%}"
+    "@keyframes turn{0%,49.9%{transform:scaleX(1)}50%,99.9%{transform:scaleX(-1)}"
+    "100%{transform:scaleX(1)}}"
+    f".turn{{animation:turn {LOOP_S}s linear infinite}}"
+)
 
 
 def _lit(c: Ctx, col: str) -> str:
-    """A sprite keeps some of its own light: only half dimmed by the time of day."""
-    return pal.mix(c.lit(col), col, 0.82)
+    """A sprite keeps most of its own light: only partly dimmed by the time of day."""
+    return pal.mix(c.lit(col), col, 0.75)
 
 
 def stage(level: int) -> int:
@@ -36,86 +41,89 @@ def stage(level: int) -> int:
     return 1 + sum(level >= lv for lv in EVOLVE_LEVELS)
 
 
-def _tails(g: Layer, c: Ctx, angles: tuple[float, ...], length: float) -> None:
-    """Fluffy tails from the rump, each with a sky-blue tip. They are mirrored so they sweep
-    up and back, and their lengths vary a little so a full set looks like fur, not a fan."""
-    fur, tip = _lit(c, "#fbf6ee"), _lit(c, "#7fc8f0")
-    for k, a in enumerate(angles):
-        ln = length * (1, 1.12, 1.05, 1.16)[k % 4]
-        t = f"translate(-3.5 -3.5) rotate({a}) scale({ln:.2f} -{ln:.2f})"
-        g.path(TAIL, fur, stroke=INK, stroke_width=0.5 / ln, transform=t)
-        g.path(TIP, tip, transform=t)
-
-
-def _fox(g: Layer, c: Ctx, crystal: bool) -> None:
-    """The body and head, sitting, about 22 units tall with the ears."""
-    fur, shade = _lit(c, "#fbf6ee"), _lit(c, "#e4d8c8")
-    ear, mark = _lit(c, "#ffb3a0"), _lit(c, "#e8a83a")
-    line = {"stroke": INK, "stroke_width": 0.5}
-    g.ellipse(-2.6, -2.8, 3.2, 2.6, shade, **line)  # haunch
-    g.ellipse(0, -5.2, 4.8, 5, fur, **line)  # body
-    g.path("M1.4 -9.2q2 2.4 0.4 5.6q2.4 -1.2 3.2 -4.4z", "#ffffff")  # chest fluff
-    for px in (1.4, 4):
-        g.ellipse(px, -0.7, 1.4, 0.9, fur, **line)  # front paws
-    # Ears first, so the head overlaps their base.
-    g.path("M0.6 -15.2L1 -21.6L4.4 -16.4Z", fur, **line)
-    g.path("M5.2 -16.6L8 -21.4L8.8 -15.2Z", fur, **line)
-    g.path("M1.5 -16L1.8 -19.8L3.7 -16.6Z", ear)
-    g.path("M5.9 -16.6L7.6 -19.6L8.1 -15.8Z", ear)
-    g.path("M-1 -12.2C-1 -16.6 9.6 -17 9.8 -12.4C10 -9.4 7.4 -7.8 4.4 -7.8"
-           "C1.4 -7.8 -1 -9.4 -1 -12.2Z", fur, **line)  # head
-    g.path("M-1 -11.4l-1.4 0.8l1.6 0.6l-1 1l1.8 0.2", stroke=INK, stroke_width=0.4)  # cheek tuft
-    g.ellipse(8.2, -10.6, 2.2, 1.6, "#ffffff")  # muzzle
-    g.circle(10, -11.2, 0.7, INK)  # nose
-    for ex in (3, 6.4):  # happy closed eyes
-        g.path(f"M{ex - 1} -12.4q1 -1.2 2 0", stroke=INK, stroke_width=0.6,
-               stroke_linecap="round")
-    g.ellipse(2.2, -10.6, 1.1, 0.6, "#ff9fb8", opacity=0.7)  # blush
-    if crystal:
-        g.path("M4.6 -17.4l1 1.5l-1 1.5l-1 -1.5z", "#7fe3ff", stroke=INK, stroke_width=0.3)
-    else:
-        g.path("M4.6 -16.8q0.9 1 0 2q-0.9 -1 0 -2z", mark)
-
-
-def _fire(g: Layer, c: Ctx, x: float, y: float, delay: float) -> None:
-    """A wisp of blue fox-fire."""
+def _wing(c: Ctx, beating: bool) -> str:
+    """A small bat-like wing rising from the shoulder at 0,0."""
     w = Layer()
-    if c.dark:
-        c.glow(w, 0, -4, 7, "#7fe3ff", 0.6)
-    w.path(FIRE, "#9fe6ff", opacity=0.9)
-    w.path(FIRE, "#ffffff", transform="translate(0 -0.6) scale(.45)")
-    g.raw(f'<g transform="translate({x} {y})"><g class="bob" style="animation-duration:1.8s;'
-          f'animation-delay:-{delay}s">{w.svg()}</g></g>')
+    w.path("M0 0C-2 -7 -8 -11 -12 -9.5C-9.6 -8 -9.8 -6 -8.6 -4.4C-7 -5.4 -5 -4.6 -4.4 -3"
+           "C-3 -3.6 -1.6 -2.4 -1 0Z", _lit(c, "#8fe0b8"), stroke=INK, stroke_width=0.5)
+    w.path("M0 0L-11 -9M-0.6 -0.4L-8.4 -4.4M-0.8 -0.2L-4.4 -3", stroke=_lit(c, "#2a8a5a"),
+           stroke_width=0.5)
+    cls = ' class="beat"' if beating else ""
+    return f"<g{cls}>{w.svg()}</g>"
 
 
-def _puff(g: Layer, c: Ctx) -> None:
-    _tails(g, c, (190,), 0.8)
-    _fox(g, c, crystal=False)
-    g.path("M4.2 -17q-1.4 -3.4 1.6 -5.4q0.8 3 -1.6 5.4z", _lit(c, "#5cbf6a"))  # the leaf
-    g.line(4.2, -17, 4.6, -18.6, _lit(c, "#3f8a46"), 0.5)
+def _dragon(g: Layer, c: Ctx, beating: bool) -> None:
+    """A little dragon standing with its feet on y=0, about 20 units tall with its horns."""
+    body, belly = _lit(c, "#3fbf7f"), _lit(c, "#f6e7a8")
+    gold = _lit(c, "#f2c46d")
+    line = {"stroke": INK, "stroke_width": 0.5}
+    # The tail, curling up behind, with a spade at its tip.
+    tail = "M-3 -3C-9 -2 -13 -5 -12 -9.4C-11.6 -11.4 -9.4 -11.4 -9 -9.8"
+    g.path(tail, stroke=INK, stroke_width=3.4, stroke_linecap="round")
+    g.path(tail, stroke=body, stroke_width=2.4, stroke_linecap="round")
+    g.path("M-9 -9.8l-1.6 -2.2l2.8 -0.4z", gold, **line)
+    g.raw(f'<g transform="translate(-0.5 -9.5)">{_wing(c, beating)}</g>')
+    g.ellipse(-2.6, -1.6, 2.4, 1.6, body, **line)  # back leg
+    g.ellipse(0, -5.6, 5, 5, body, **line)  # body
+    g.path("M1.2 -9.6C4.6 -8.4 5 -3 2.4 -1.2C1 -2.6 0.4 -6.6 1.2 -9.6Z", belly)
+    g.path("M1.6 -7.6h2.6M1.4 -5.4h3.1M1.6 -3.3h2.4", stroke=_lit(c, "#d9c47a"),
+           stroke_width=0.4)
+    g.ellipse(2.8, -1, 1.7, 1.1, body, **line)  # front foot
+    for k, (sx, sy) in enumerate(((-1.6, -10.4), (-3.8, -9.2), (-5.6, -7.2))):  # back spikes
+        g.path(f"M{sx - 1} {sy + 0.6}l{0.8 + k * 0.1:.1f} -2.2l1 1.8z", gold)
+    # The head: round with a short snout, big eyes and two little gold horns.
+    g.path("M2.4 -15.6q-1.2 -3.4 -3.4 -4.2q1.6 1.8 1.2 4.6z", gold, **line)
+    g.path("M4.6 -16.2q-0.2 -3.4 -1.8 -4.8q0.8 2.2 -0.2 4.8z", gold, **line)
+    g.ellipse(4.2, -12.4, 4.6, 3.9, body, **line)
+    g.path("M6.4 -14.2C9.4 -14.6 11.8 -13 11.8 -11.2C11.8 -9.6 9.6 -9 6.8 -9.4Z", body, **line)
+    g.circle(10.7, -12.2, 0.35, INK)  # nostril
+    g.path("M7.6 -10.2q1.8 0.8 3.4 0", stroke=INK, stroke_width=0.4)  # smile
+    g.ellipse(5.4, -12.8, 1.15, 1.45, INK)
+    g.circle(5.8, -13.3, 0.45, "#ffffff")
+    g.ellipse(3.2, -11, 1, 0.55, "#ff9fb8", opacity=0.7)  # blush
 
 
-def _drift(g: Layer, c: Ctx) -> None:
-    _tails(g, c, (175, 200, 225), 0.9)
-    _fox(g, c, crystal=True)
-    _fire(g, c, 13, -16, 0)
+def _pip(g: Layer, c: Ctx) -> None:
+    """The hatchling in the bottom half of its egg, wearing a bit of the top half."""
+    shell, spot = _lit(c, "#fbf3e0"), _lit(c, "#f2c46d")
+    _dragon(g, c, beating=False)
+    g.path("M-7 -4.4L-5 -6.6L-3 -4.6L-1 -7L1 -4.6L3 -6.6L5 -4.6L7 -6.2C7.6 0.6 -7.6 0.6 -7 -4.4Z",
+           shell, stroke=INK, stroke_width=0.5)
+    for sx, sy in ((-3.6, -2.4), (1.6, -1.6), (4.4, -3.4)):
+        g.circle(sx, sy, 0.7, spot)
+    g.path("M1.4 -15.4C1.8 -18.2 6.6 -18.2 7.2 -15.6L6 -16.4L5 -15.2L3.8 -16.4L2.6 -15.2Z",
+           shell, stroke=INK, stroke_width=0.4)
 
 
-def _nimbus(g: Layer, c: Ctx) -> None:
-    if c.dark:
-        c.glow(g, 4.6, -16, 9, "#7fe3ff", 0.7, class_="pulse")
-    _tails(g, c, tuple(138 + k * 18 for k in range(9)), 1.05)
-    _fox(g, c, crystal=True)
-    for k, (x, y) in enumerate(((14, -18), (-14, -22), (2, -28))):
-        _fire(g, c, x, y, k * 0.6)
+def _nest(g: Layer, c: Ctx) -> None:
+    """The nest left on the terrace, with a few shell pieces in it."""
+    twig = _lit(c, "#8a5d42")
+    g.ellipse(0, -1.6, 7.5, 2.6, twig)
+    g.path("M-7 -2.4q3.5 -2 7 -0.6q3.5 -1.6 7 0.4M-6 -0.6q3 1 6 0q3 -1 6 0.2",
+           stroke=_lit(c, "#5a3f2e"), stroke_width=0.6)
+    g.path("M-2 -3.4l1.6 -1.8l1.2 1.6zM2 -3.2l1.4 -1.2l0.8 1.4z", _lit(c, "#fbf3e0"))
 
 
 def companion(L: Layer, c: Ctx, x: float, y: float, level: int) -> None:
-    """Your companion sitting (or, once grown, hovering) on the terrace at (x, y)."""
+    """Your companion on the terrace at (x, y); once grown, flying loops around the town."""
     form = stage(level)
     g = Layer()
-    (_puff, _drift, _nimbus)[form - 1](g, c)
-    size = (0.72, 0.85, 1.0)[form - 1]  # sized to the old sprites, so the terrace still fits
-    lift = -8 if form == 3 else 0
-    L.raw(f'<g transform="translate({x:.1f} {y + lift:.1f}) scale({size})"><g class="bob" '
+    if form == 1:
+        _pip(g, c)
+    elif form == 2:
+        _dragon(g, c, beating=True)
+    else:
+        _nest(g, c)
+    size = (0.72, 0.9, 1.0)[form - 1]  # sized so the terrace still fits
+    L.raw(f'<g transform="translate({x:.1f} {y:.1f}) scale({size})"><g class="bob" '
           f'style="animation-duration:{2.4 + form * 0.4:.1f}s">{g.svg()}</g></g>')
+    if form == 3:
+        flyer = Layer()
+        if c.dark:
+            c.glow(flyer, 4, -10, 16, "#7fe3ff", 0.4)
+        _dragon(flyer, c, beating=True)
+        cy, rx, ry = y - 46, 150, 34
+        path = (f"M{x - rx:.0f} {cy:.0f}A{rx} {ry} 0 0 1 {x + rx:.0f} {cy:.0f}"
+                f"A{rx} {ry} 0 0 1 {x - rx:.0f} {cy:.0f}")
+        L.raw(f'<g><g class="turn"><g transform="scale(1.3) translate(0 8)">{flyer.svg()}</g>'
+              f'</g><animateMotion dur="{LOOP_S}s" repeatCount="indefinite" path="{path}"/></g>')

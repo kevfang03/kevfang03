@@ -196,13 +196,15 @@ def render(w: World) -> str:
         + ", ".join(r.name for r in st.repos[:8])
         + (f". Now building {quest.repo.name}, {quest.remaining} commits from its next tier."
            if quest else ".")
-        + f" Your companion, {companion.NAMES[companion.stage(lv.level) - 1]}, waits on the HQ roof."
+        + (f" Your baby dragon, {companion.NAMES[companion.stage(lv.level) - 1]}, "
+           + ("flies loops around the town." if companion.stage(lv.level) == 3
+              else "waits on the HQ roof."))
     )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}{seasons.CSS}{holidays.CSS}{hud.MOBILE_CSS}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}{seasons.CSS}{holidays.CSS}{companion.CSS}{hud.MOBILE_CSS}"
         f"</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )
