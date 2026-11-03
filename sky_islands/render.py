@@ -16,6 +16,7 @@ from . import (
     sky,
     stations,
     town,
+    weather,
     wonders,
     world,
 )
@@ -151,6 +152,7 @@ def render(w: World) -> str:
     # Things that cross the whole sky, whatever the camera is doing.
     wonders.squadron(L, c)
     wonders.dragon_flight(L, c)
+    weather.overlay(L, c)
     L.rect(0, 0, W, H, defs.radial("vignette", [(0.55, "#000000", 0), (1, "#000000", 0.38)],
                                    r=0.75))
     L.rect(0, 0, W, H, "#05040f", class_="fade")
@@ -176,7 +178,7 @@ def render(w: World) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}"
         f"</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )
