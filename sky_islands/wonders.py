@@ -58,8 +58,9 @@ def _frame(L: Layer, cx: float, top: float, w: float, body: Layer) -> None:
 
 def starport(L: Layer, c: Ctx, cx: float, top: float, w: float, ships: int,
              haze: float = 0.0) -> None:
-    """A landing pad on pylons, a ribbed hangar with a ship nosing out, fuel tanks and a
-    control tower with a radar dish; parked ships, and one taking off now and then."""
+    """A landing pad on pylons, a ribbed hangar with a ship nosing out, fuel tanks, a
+    control tower with a radar dish and a rocket on its launch gantry; parked ships, and one
+    taking off now and then."""
     def tone(col: str) -> str:
         return c.haze(c.lit(col), haze)
 
@@ -88,6 +89,40 @@ def starport(L: Layer, c: Ctx, cx: float, top: float, w: float, ships: int,
     for x in (-44, -35):
         g.rect(x, -16, 8, 16 + foot(x), tone("#e8e4dc"), rx=4)
         g.rect(x, -10, 8, 2, tone("#ff8a3a"))
+    # A launch gantry behind the hangar and a rocket on its mount. Once the Starport is open
+    # it launches each loop as the overview opens (see rocket_css), and is back on the pad
+    # by the time the ride passes.
+    gx = 13
+    lattice = "".join(f"M{gx} {-k * 9}L{gx + 5} {-(k + 1) * 9}M{gx + 5} {-k * 9}L{gx} {-(k + 1) * 9}"
+                      for k in range(9))
+    g.path(f"M{gx} 0V-82M{gx + 5} 0V-82", stroke=dark, stroke_width=1)
+    g.path(lattice, stroke=steel, stroke_width=0.5)
+    g.path(f"M{gx} -58H9M{gx} -30H9", stroke=dark, stroke_width=1.2)
+    g.circle(gx + 2.5, -84, 1.2, "#ff5a4a", class_="av")
+    g.rect(-4, -3, 16, 3, dark)
+    rocket = Layer()
+    trail = c.defs.linear("contrail", [(0, "#ffffff", 0.8), (1, "#ffffff", 0)])
+    flame = Layer()
+    flame.rect(1.6, 0, 6.8, 70, trail, rx=3.4)
+    flame.path("M1 -1Q5 18 9 -1Z", "#ffb35a")
+    flame.path("M2.8 -1Q5 10 7.2 -1Z", "#fff3c4")
+    c.glow(flame, 5, 2, 14, "#ffcf7a", 0.9)
+    rocket.group(flame, class_="thrust", opacity=0)
+    body, stripe = tone("#f4f2ee"), tone("#ff8a3a")
+    rocket.path("M0 -4L-3.6 0V-9L0 -14Z", dark)  # fins
+    rocket.path("M10 -4L13.6 0V-9L10 -14Z", dark)
+    rocket.path("M0 -2V-50Q0 -62 5 -70Q10 -62 10 -50V-2Z", body)
+    rocket.path("M5 -70Q8.6 -64 9.6 -56H0.4Q1.4 -64 5 -70Z", tone("#e2574c"))  # nose cone
+    rocket.rect(0, -30, 10, 4, stripe)
+    rocket.rect(0, -12, 10, 2, tone("#d9b45a"))
+    rocket.circle(5, -44, 2, tone("#3a4258"))
+    rocket.circle(5, -44, 1.3, "#7fe3ff")
+    rocket.rect(7.6, -50, 2.4, 48, "#000000", opacity=0.1)
+    g.group(rocket, class_="rocket" if not haze else None)
+    if not haze:
+        for k, (dx, r) in enumerate(((-6, 7), (5, 9), (16, 7), (0, 5), (11, 6))):
+            g.circle(dx, -2, r, "#eef0f6", class_="plume", opacity=0,
+                     style=f"animation-delay:{k * 0.06:.2f}s")
     # Hangar: a ribbed half-cylinder with its door open.
     g.path("M-26 0V-14A22 18 0 0 1 18 -14V0Z", tone("#a8b0c4"))
     for k in range(1, 6):
@@ -253,6 +288,27 @@ def _timing(window: tuple[float, float]) -> str:
     a, b = window
     return (f'dur="{LOOP_S}s" repeatCount="indefinite" calcMode="linear" '
             f'keyPoints="0;0;1;1" keyTimes="0;{a};{b};1"')
+
+
+def rocket_css() -> str:
+    """The Starport rocket's launch, timed to the camera loop: it fires up just after the
+    overview opens, climbs off the top of the frame, and is back on its pad when the cut to
+    the ride hides the swap."""
+    from .camera import LOOP_S  # imported here: the camera module imports the ride, which needs us
+
+    return (
+        "@keyframes rocket{0%,3%{transform:translate(0,0);opacity:1;"
+        "animation-timing-function:ease-in}11%{transform:translate(16px,-330px);opacity:1}"
+        "11.1%,13.4%{transform:translate(16px,-330px);opacity:0}"
+        "13.5%,100%{transform:translate(0,0);opacity:1}}"
+        f".rocket{{animation:rocket {LOOP_S}s linear infinite}}"
+        "@keyframes thrust{0%,2.4%{opacity:0}3%,10.8%{opacity:1}11%,100%{opacity:0}}"
+        f".thrust{{animation:thrust {LOOP_S}s linear infinite}}"
+        "@keyframes plume{0%,2.6%{transform:scale(.3);opacity:0}3.4%{opacity:.85}"
+        "12%{transform:scale(2.4);opacity:0}100%{opacity:0}}"
+        f".plume{{animation:plume {LOOP_S}s ease-out infinite;transform-box:fill-box;"
+        "transform-origin:center}"
+    )
 
 
 def dragon_window() -> tuple[float, float]:

@@ -52,8 +52,8 @@ and her fawn, rabbits, an owl on the treehouse roof, and fairies flitting throug
 1. **Home meadow:** HQ, repo buildings, farm, orchard.
 2. **Philly island:** a mini skyline with City Hall and Boathouse Row.
 3. **Stadium island:** dark most days; lit up on game days.
-4. **Starport** (level 6): a landing pad, a hangar, fuel tanks and a control tower, floating on
-   thrusters. One starfighter parks there per 3 merged pull requests (up to three), and one
+4. **Starport** (level 6): a landing pad, a hangar, fuel tanks, a control tower and a rocket on
+   its launch gantry, floating on thrusters. The rocket launches each loop as the overview opens. One starfighter parks there per 3 merged pull requests (up to three), and one
    lifts off now and then.
 5. **Sky Shrine** (level 8): a torii gate, a shrine hall, stone lanterns and cherry trees, with
    paper lanterns strung under its lip. Home of the sky dragon.

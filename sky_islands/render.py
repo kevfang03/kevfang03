@@ -26,7 +26,7 @@ from . import (
 from .context import FONT, Ctx, H, W
 from .model import World
 from .progress import current_quest, level_info
-from .svg import Defs, Layer
+from .svg import Defs, Layer, compact
 
 # Plain CSS and SMIL animations keep running when GitHub shows the SVG as a README image.
 CSS = (
@@ -202,11 +202,11 @@ def render(w: World) -> str:
            + ("flies loops around the town." if companion.stage(lv.level) == 3
               else "waits on the HQ roof."))
     )
-    return (
+    return compact(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}{seasons.CSS}{holidays.CSS}{companion.CSS}{hud.MOBILE_CSS}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}{seasons.CSS}{holidays.CSS}{companion.CSS}{wonders.rocket_css()}{hud.MOBILE_CSS}"
         f"</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )

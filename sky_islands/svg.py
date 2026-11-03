@@ -6,6 +6,7 @@ detailed scene stays a few hundred kilobytes, which keeps README images fast.
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from collections.abc import Iterable
 from xml.sax.saxutils import escape
@@ -191,3 +192,27 @@ class Defs:
 
     def svg(self) -> str:
         return f"<defs>{''.join(self.items)}</defs>"
+
+
+_NUMBER = re.compile(r"(?<![\d.])-?\d+\.\d+")
+_TAG = re.compile(r"<[^<>]+>")
+
+
+def _shorter(m: re.Match) -> str:
+    """A number written as briefly as the drawing needs: one decimal once it is 10 or more
+    (a tenth of a unit is invisible at that size), and no leading zero (.5 rather than 0.5)."""
+    text = m.group(0)
+    value = float(text)
+    if abs(value) >= 10:
+        text = f"{value:.1f}".rstrip("0").rstrip(".")
+    if text.startswith("0."):
+        text = text[1:]
+    elif text.startswith("-0."):
+        text = "-" + text[2:]
+    return text or "0"
+
+
+def compact(svg: str) -> str:
+    """Shorten the numbers inside tags (never the visible text), which keeps the busiest
+    worlds well under the size limit."""
+    return _TAG.sub(lambda t: _NUMBER.sub(_shorter, t.group(0)), svg)
