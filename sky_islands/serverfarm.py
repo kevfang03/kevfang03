@@ -134,6 +134,8 @@ def _fan_mill(L: Layer, c: Ctx, x: float, base: float) -> None:
            f"M{x - 6} {base - 10}L{x + 5} {base - 22}M{x + 6} {base - 10}L{x - 5} {base - 22}"
            f"M{x - 4} {base - 26}L{x + 3} {base - 38}M{x + 4} {base - 26}L{x - 3} {base - 38}",
            stroke=steel, stroke_width=1.1)
+    for dx in (-7, 7):
+        L.rect(x + dx - 2.5, base - 1.5, 5, 2.5, c.lit("#9a9488"), rx=0.6)
     cy = base - 54
     L.circle(x, cy, 13, c.lit("#3a4058"), opacity=0.35)
     blades = Layer()
@@ -258,7 +260,9 @@ def server_farm(L: Layer, c: Ctx, s: Shape) -> None:
     _help_desk(L, c, s.x0 + 136, s.ground(s.x0 + 136) + 3)
     bx = s.x0 + 168
     _barn(L, c, bx, s.ground(bx + 30) + 3)
-    _fan_mill(L, c, s.x0 + 244, steps[0][2] - 2)
+    # In front of the hill's lower slope, standing on the flat island ground; the slope
+    # itself falls away under one leg.
+    _fan_mill(L, c, s.x0 + 244, s.ground(s.x0 + 244) + 3)
     top_a, top_b, top_y = steps[-1]
     _dish(L, c, top_b - 50, top_y - 2)
     _, mid_b, mid_y = steps[1]
