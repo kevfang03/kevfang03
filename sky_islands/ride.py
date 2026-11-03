@@ -123,7 +123,7 @@ def wild_side(L: Layer, c: Ctx) -> None:
             L.circle(x, y + ln, 2.4, col)
             if c.dark:
                 c.glow(L, x, y + ln, 10, col, 0.7, class_="pulse")
-    for x in (s.x0 + 70, s.cx + 160, s.x1 - 60):
+    for x in (s.cx - 60, s.cx + 70):
         waterfall(L, c, s, x)
     L.ellipse(s.cx, RAIL_Y + 70, s.w * 0.6, 26, "#ffffff", opacity=0.18, filter=c.defs.blur(12))
     # Two rows of pines: a hazy back row and a darker front row.
@@ -138,7 +138,7 @@ def wild_side(L: Layer, c: Ctx) -> None:
     # A ruined arch and a broken tower near the cliff's edge, with glowing mushrooms.
     stone = c.lit("#9a9aa8")
     joint = pal.shade(stone, 0.75)
-    ax = s.x0 + 150
+    ax = BRIDGE_TO + 30
     base = s.ground(ax) + 2
     # The arch, built of dressed blocks, its keystone gone and one side crumbling.
     L.path(f"M{ax} {base}v-46a24 24 0 0 1 20 -23.6l2 6a17 17 0 0 0 -13 16.6v47z", stone)
@@ -180,10 +180,70 @@ def wild_side(L: Layer, c: Ctx) -> None:
                      style=f"animation-delay:-{c.rng.uniform(0, 4):.1f}s")
 
 
+# The Starport and the Sky Shrine float just off the wild side's two ends, in front of the
+# forest, so the train passes right by them: (key, name, centre x, top, width).
+NEAR = (("starport", "STARPORT", 2060, 200, 160), ("shrine", "SKY SHRINE", 2740, 195, 150))
+BRIDGE_TO = 2198  # where the Starport's rope bridge reaches the forest
+PYLON_X = 2600  # the cable car's lower station on the forest
+
+
+def _rope_bridge(L: Layer, c: Ctx, a: tuple[float, float], b: tuple[float, float]) -> None:
+    """A sagging rope bridge: wooden planks on a deck rope, with a handrail rope above."""
+    (x0, y0), (x1, y1) = a, b
+    sag = 10
+    mx, my = (x0 + x1) / 2, max(y0, y1) + sag
+
+    def at(u: float) -> tuple[float, float]:
+        return ((1 - u) ** 2 * x0 + 2 * (1 - u) * u * mx + u * u * x1,
+                (1 - u) ** 2 * y0 + 2 * (1 - u) * u * my + u * u * y1)
+
+    rope, wood = c.lit("#c9b48a"), c.lit("#8a5d42")
+    planks, hangers = [], []
+    n = 14
+    for k in range(1, n):
+        x, y = at(k / n)
+        planks.append(f"M{x - 1.8:.1f} {y:.1f}h3.6")
+        if k % 2 == 0:
+            hangers.append(f"M{x:.1f} {y:.1f}v-7")
+    L.path("".join(planks), stroke=wood, stroke_width=2.2)
+    L.path("".join(hangers), stroke=rope, stroke_width=0.5)
+    L.path(f"M{x0} {y0}Q{mx:.1f} {my:.1f} {x1} {y1}", stroke=rope, stroke_width=0.9)
+    L.path(f"M{x0} {y0 - 7}Q{mx:.1f} {my - 7:.1f} {x1} {y1 - 7}", stroke=rope, stroke_width=0.9)
+    for x, y in (a, b):
+        L.rect(x - 1.2, y - 9, 2.4, 11, wood)
+
+
+def _cable_car(L: Layer, c: Ctx, a: tuple[float, float], b: tuple[float, float],
+               running: bool) -> None:
+    """A cable car from a pylon on the forest up to the Shrine; it runs once the Shrine is
+    open, and waits at the bottom while it is locked."""
+    (x0, y0), (x1, y1) = a, b
+    steel = c.lit("#3a3050")
+    base = y0 + 36
+    L.path(f"M{x0 - 5} {base}L{x0} {y0}L{x0 + 5} {base}M{x0 - 3.5} {base - 12}h7"
+           f"M{x0 - 2} {base - 24}h4", stroke=steel, stroke_width=1.2)
+    L.rect(x0 - 4, y0 - 2, 8, 3, steel)
+    L.line(x0, y0, x1, y1, c.lit("#5a5070"), 0.8)
+    cab = Layer()
+    cab.line(0, 0, 0, 5, steel, 0.8)
+    cab.rect(-5.5, 5, 11, 9, c.lit("#3db0a0"), rx=2.5)
+    cab.rect(-4.5, 7, 9, 3.4, "#ffd98a" if c.P["lamps"] else c.lit("#bfe4f8"), rx=1)
+    cab.rect(-5.5, 5, 11, 1.6, c.lit("#ffd27a"), rx=0.8)
+    if c.P["lamps"]:
+        c.glow(cab, 0, 9, 9, "#ffcf7a", 0.6)
+    if running:
+        L.raw(f"<g>{cab.svg()}<animateMotion dur=\"14s\" repeatCount=\"indefinite\" "
+              f'calcMode="linear" keyPoints="0;0;1;1;0" keyTimes="0;.1;.45;.6;1" '
+              f'path="M{x0} {y0}L{x1} {y1}"/></g>')
+    else:
+        L.group(cab, transform=f"translate({x0 + 8} {y0 + 3})")
+
+
 def locked_nearby(L: Layer, c: Ctx) -> None:
-    """The Starport and the Sky Shrine, floating close to the wild side."""
-    for key, name, cx, top, w in (("starport", "STARPORT", 2150, 150, 150),
-                                  ("shrine", "SKY SHRINE", 2690, 128, 130)):
+    """The Starport and the Sky Shrine, floating just off the wild side's cliffs. A rope
+    bridge crosses to the Starport and a cable car climbs to the Shrine, so they read as
+    places the train passes rather than shapes in the forest's sky."""
+    for key, name, cx, top, w in NEAR:
         s = Shape(cx, top, w, w * 0.8)
         g = Layer()
         wonder(g, c, key, s, f"near-{key}", None, name)
@@ -191,7 +251,13 @@ def locked_nearby(L: Layer, c: Ctx) -> None:
         sign(g, cx, top - (26 if locked else 60),
              f"{name} · UNLOCKS AT LV {UNLOCK[key]}" if locked else name,
              "#ffe08a" if locked else "#9fe6ff")
-        L.group(g, class_="bob", style=f"animation-duration:{5 + (cx % 3)}s")
+        L.add(g)
+        if key == "starport":
+            _rope_bridge(L, c, (cx + w / 2 - 8, s.ground(cx + w / 2 - 8) + 2),
+                         (BRIDGE_TO, WILD.ground(BRIDGE_TO) + 1))
+        else:
+            _cable_car(L, c, (PYLON_X, WILD.ground(PYLON_X) - 36),
+                       (cx - w / 2 + 10, s.ground(cx - w / 2 + 10) - 2), not locked)
 
 
 # ---------------------------------------------------------------- the west side: see serverfarm.py
@@ -403,13 +469,13 @@ def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer, str]:
     for k in range(5):
         world.raw(f'<use href="#clouds" transform="translate({k * W - 120} -30)"/>')
     strip = Layer()
-    locked_nearby(strip, c)
     strip.raw(f'<use href="#isl-home" transform="translate({HOME_T[0]:.1f} {HOME_T[1]:.1f}) '
               f'scale({SCALE})"/>')
     strip.raw(f'<use href="#isl-stadium" transform="translate({STADIUM_T[0]:.1f} {STADIUM_T[1]:.1f}) '
               f'scale({SCALE})"/>')
     town_traffic(strip, c)
     wild_side(strip, c)
+    locked_nearby(strip, c)
     server_farm(strip, c, FIELDS)
     track(strip, c)
     css = stations.draw(strip, c)
