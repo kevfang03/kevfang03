@@ -2,7 +2,8 @@
 
     python -m sky_islands demo --phase night
     python -m sky_islands gallery --out preview/islands
-    python -m sky_islands live --login octocat --out dist/sky-islands.svg
+    python -m sky_islands live --login octocat --out dist/sky-islands.svg --views dist/views
+    python -m sky_islands buttons --out assets/buttons
 
 The live command reads public stats from GitHub and needs GITHUB_TOKEN (or GH_TOKEN) set.
 """
@@ -15,10 +16,12 @@ from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
 
+from .buttons import write_buttons
 from .clock import PHASES, PHILLY
 from .github import fetch_stats, poster, token_from_env
 from .model import DEMO_STATS, demo_world, world_at
 from .render import render
+from .views import render_views
 
 # (label, phase, weather, total contributions, date) for the review gallery.
 GALLERY = [
@@ -50,6 +53,10 @@ def main(argv: list[str] | None = None) -> int:
     live = sub.add_parser("live", help="draw the world from an account's live GitHub stats")
     live.add_argument("--login", required=True, help="GitHub account name")
     live.add_argument("--out", type=Path, default=Path("dist/sky-islands.svg"))
+    live.add_argument("--views", type=Path, default=None,
+                      help="also draw dawn, day, dusk, night and a level 10 preview here")
+    b = sub.add_parser("buttons", help="draw the README's buttons")
+    b.add_argument("--out", type=Path, default=Path("assets/buttons"))
     args = p.parse_args(argv)
 
     if args.cmd == "live":
@@ -62,6 +69,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote {args.out} ({len(svg) // 1024} KB) at {world.phase}: "
               f"{stats.contributions_total} contributions, {stats.streak_days}-day streak, "
               f"{len(stats.repos)} repos")
+        if args.views:
+            written = render_views(stats, now, args.views)
+            print(f"wrote {len(written)} views to {args.views}")
+        return 0
+
+    if args.cmd == "buttons":
+        written = write_buttons(args.out)
+        print(f"wrote {len(written)} buttons to {args.out}")
         return 0
 
     if args.cmd == "demo":
