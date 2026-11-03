@@ -2,6 +2,9 @@
 
     python -m sky_islands demo --phase night
     python -m sky_islands gallery --out preview/islands
+    python -m sky_islands live --login octocat --out dist/sky-islands.svg
+
+The live command reads public stats from GitHub and needs GITHUB_TOKEN (or GH_TOKEN) set.
 """
 
 from __future__ import annotations
@@ -9,10 +12,12 @@ from __future__ import annotations
 import argparse
 import html
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
 
-from .clock import PHASES
-from .model import DEMO_STATS, demo_world
+from .clock import PHASES, PHILLY
+from .github import fetch_stats, poster, token_from_env
+from .model import DEMO_STATS, demo_world, world_at
 from .render import render
 
 # (label, phase, weather, total contributions, date) for the review gallery.
@@ -42,7 +47,22 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--out", type=Path, default=Path("preview/islands/world.svg"))
     g = sub.add_parser("gallery", help="draw a set of demo worlds and an index page")
     g.add_argument("--out", type=Path, default=Path("preview/islands"))
+    live = sub.add_parser("live", help="draw the world from an account's live GitHub stats")
+    live.add_argument("--login", required=True, help="GitHub account name")
+    live.add_argument("--out", type=Path, default=Path("dist/sky-islands.svg"))
     args = p.parse_args(argv)
+
+    if args.cmd == "live":
+        now = datetime.now(PHILLY)
+        stats = fetch_stats(args.login, poster(token_from_env()), now)
+        world = world_at(stats, now)
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        svg = render(world)
+        args.out.write_text(svg, encoding="utf-8")
+        print(f"wrote {args.out} ({len(svg) // 1024} KB) at {world.phase}: "
+              f"{stats.contributions_total} contributions, {stats.streak_days}-day streak, "
+              f"{len(stats.repos)} repos")
+        return 0
 
     if args.cmd == "demo":
         args.out.parent.mkdir(parents=True, exist_ok=True)

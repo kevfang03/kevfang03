@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from .clock import PHILLY, moon_phase
+from .clock import PHILLY, approx_sun_times, moon_phase, phase_for
 
 
 @dataclass(frozen=True)
@@ -100,3 +100,11 @@ def demo_world(phase: str = "dusk", weather: str = "clear", stats: Stats = DEMO_
                              "sixers": ("BOS", 19, 30, False)}[game]
         games = (Game(game, opp, datetime(*day, gh, gm, tzinfo=PHILLY), home),)
     return World(when=when, phase=phase, weather=weather, stats=stats, temp_f=48, games=games)
+
+
+def world_at(stats: Stats, now: datetime) -> World:
+    """The world for real stats at a real moment: the light comes from Philadelphia's
+    approximate sunrise and sunset that day. Weather and game days are not live yet."""
+    now = now.astimezone(PHILLY)
+    sunrise, sunset = approx_sun_times(now.date())
+    return World(when=now, phase=phase_for(now, sunrise, sunset), weather="clear", stats=stats)
