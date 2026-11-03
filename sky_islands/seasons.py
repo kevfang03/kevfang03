@@ -1,12 +1,12 @@
 """What each season adds on top of the trees, crops and flowers that already change colour:
 
 - **Winter:** snow on every island's top, with icicles hanging off the lip.
-- **Spring:** blossom petals drifting across the sky.
+- **Spring:** blossom petals drifting down from the town's trees.
 - **Summer:** butterflies over the town by day.
-- **Fall:** leaves tumbling down.
+- **Fall:** leaves tumbling down from the trees.
 
-Petals and leaves are pattern tiles slid by CSS, like the rain, so they cost little. They
-stay away in rain and snow, which have the sky to themselves.
+Petals and leaves are a handful of single pieces, each on its own clock; they stay away in
+rain and snow, which have the sky to themselves.
 """
 
 from __future__ import annotations
@@ -16,15 +16,15 @@ from typing import TYPE_CHECKING
 from .clock import season
 from .context import Ctx
 from .svg import Layer
-from .weather import _sheet
 
 if TYPE_CHECKING:  # the island module draws the snow cap, so it imports this one
     from .island import Shape
 
 CSS = (
-    "@keyframes petals1{to{transform:translate(-80px,160px)}}"
-    "@keyframes petals2{to{transform:translate(-110px,220px)}}"
-    ".petals1{animation:petals1 14s linear infinite}.petals2{animation:petals2 21s linear infinite}"
+    "@keyframes drop{0%{transform:translate(0,0) rotate(0deg);opacity:0}12%{opacity:1}"
+    "35%{transform:translate(6px,13px) rotate(120deg)}65%{transform:translate(-5px,27px) "
+    "rotate(230deg)}82%{opacity:1}100%{transform:translate(4px,40px) rotate(340deg);opacity:0}}"
+    ".drop{animation:drop 8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}"
     "@keyframes flap{from{transform:scaleX(1)}to{transform:scaleX(.2)}}"
     ".flap{animation:flap .22s ease-in-out infinite alternate;transform-box:fill-box;"
     "transform-origin:center}"
@@ -51,29 +51,28 @@ def snow_cap(L: Layer, c: Ctx, ridge: list[tuple[float, float]], haze: float) ->
     L.path("".join(drips), ice, opacity=0.85)
 
 
-def overlay(L: Layer, c: Ctx) -> None:
-    """Petals in spring and leaves in fall, across the whole frame."""
+def fallers(L: Layer, c: Ctx, s: Shape) -> None:
+    """A few leaves (fall) or blossom petals (spring) drifting down from the town's trees,
+    each tumbling and swaying on its own clock. Each fades in at the branch and out before it
+    lands, so the loop never shows them jump back up. Kept to a handful on purpose: a
+    full-frame sheet of them crowded the picture and made every frame heavier to draw."""
     if c.w.weather in ("rain", "storm", "snow"):
         return
     now = season(c.w.when.month)
     if now not in ("spring", "fall"):
         return
-    rng = c.rng
     cols = PETALS if now == "spring" else LEAVES
-    for name, tile, n, size in (("petals1", 160, 6, 1.0), ("petals2", 220, 4, 1.5)):
-        bits = []
-        for k in range(n):
-            x, y, turn = rng.uniform(0, tile), rng.uniform(0, tile), rng.uniform(0, 180)
-            col = cols[k % len(cols)]
-            if now == "spring":
-                shape = f'<ellipse rx="{2.2 * size:.1f}" ry="{1.2 * size:.1f}" fill="{col}"/>'
-            else:
-                shape = (f'<path d="M0 0q{3 * size:.1f} -{4 * size:.1f} {6 * size:.1f} 0'
-                         f'q-{3 * size:.1f} {4 * size:.1f} -{6 * size:.1f} 0z" fill="{col}"/>')
-            bits.append(f'<g transform="translate({x:.0f} {y:.0f}) rotate({turn:.0f})">'
-                        f"{shape}</g>")
-        pattern = c.defs.pattern(f"{name}-{now}", tile, tile, "".join(bits))
-        _sheet(L, pattern, tile, name, opacity=0.85)
+    for k in range(9):
+        x = s.x0 + 70 + (s.w - 140) * ((k * 41) % 100) / 100
+        y = s.ground(x) - 30 - (k % 3) * 6
+        col = cols[k % len(cols)]
+        if now == "spring":
+            shape = f'<ellipse rx="2" ry="1.1" fill="{col}"/>'
+        else:
+            shape = f'<path d="M-3 0q1.5 -2.4 3 -2.4q1.5 0 3 2.4q-1.5 2.4 -3 2.4q-1.5 0 -3 -2.4z" fill="{col}"/>'
+        L.raw(f'<g transform="translate({x:.0f} {y:.0f})"><g class="drop" '
+              f'style="animation-duration:{7 + k % 4 * 1.3:.1f}s;animation-delay:-{k * 1.7:.1f}s">'
+              f"{shape}</g></g>")
 
 
 def butterflies(L: Layer, c: Ctx, s: Shape) -> None:

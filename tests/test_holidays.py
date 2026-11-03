@@ -77,7 +77,7 @@ def test_halloween_week_decorates_the_map():
 
 
 @pytest.mark.parametrize(("day", "marker"), [
-    ((2027, 4, 20), 'class="petals1"'), ((2026, 10, 10), 'class="petals1"'),
+    ((2027, 4, 20), 'class="drop"'), ((2026, 10, 10), 'class="drop"'),
     ((2027, 7, 10), 'class="flap"'), ((2027, 1, 20), 'stroke-width="5"'),
 ])
 def test_each_season_adds_something(day, marker):
@@ -96,3 +96,9 @@ def test_sunset_backdrop_fades_out_so_no_edge_crosses_the_sky():
     svg = render(demo_world("golden"))
     west = re.search(r'<linearGradient id="westsky".*?</linearGradient>', svg).group(0)
     assert west.endswith('stop-opacity="0"/></linearGradient>')
+
+
+def test_seasonal_fallers_are_few_and_never_fill_the_frame():
+    svg = render(demo_world("day", day=(2026, 10, 10)))
+    assert svg.count('class="drop"') == 9
+    assert "petals1" not in svg

@@ -96,6 +96,7 @@ def _home(c: Ctx, home: island.Shape) -> Layer:
     labels = town.draw(g, c, home)
     fireflies(g, c, home)
     seasons.butterflies(g, c, home)
+    seasons.fallers(g, c, home)
     hud.labels(g, labels)
     return g
 
@@ -173,7 +174,6 @@ def render(w: World) -> str:
     holidays.flyers(L, c, hs)
     holidays.night_tint(L, c)
     weather.overlay(L, c)
-    seasons.overlay(L, c)
     L.rect(0, 0, W, H, defs.radial("vignette", [(0.55, "#000000", 0), (1, "#000000", 0.38)],
                                    r=0.75))
     L.rect(0, 0, W, H, "#05040f", class_="fade")
