@@ -50,32 +50,51 @@ def labels(L: Layer, items: list[Label]) -> None:
         sign(L, x, y, lb.text, lb.color, LABEL_SIZE, leader=max(0.0, lb.y - y))
 
 
+# Shown at phone width the banner is about a third of its size, so its small print would be
+# a few pixels tall. An SVG's media queries see the size it is drawn at, so this applies
+# only there.
+MOBILE_CSS = (
+    "@media (max-width:600px){.fine{display:none}"
+    ".title{transform:scale(1.8);transform-origin:22px 26px}"
+    f".lvl{{transform:scale(1.7);transform-origin:{W - 22}px 23px}}"
+    ".headline{transform:translate(0,8px) scale(1.6);transform-origin:22px 42px}}"
+)
+
+
 def header(L: Layer, c: Ctx, headline: str | None = None) -> None:
     """The title, level and stats; a rare or dated event takes the tagline's place."""
     st = c.w.stats
     lv = level_info(st.contributions_total)
     L.rect(0, 0, W, HEADER_H + 10, c.defs.linear(
         "header", [(0, "#0a0a20", 0.82), (0.75, "#0a0a20", 0.5), (1, "#0a0a20", 0)]))
-    L.text(22, 26, f"{st.login.upper()} · SKY ISLANDS", 13, "#ffffff", font_weight="800",
-           letter_spacing=2)
+    # At phone width (see MOBILE_CSS) the title, level and any event line grow and the
+    # fine print hides.
+    title = Layer()
+    title.text(22, 26, f"{st.login.upper()} · SKY ISLANDS", 13, "#ffffff", font_weight="800",
+               letter_spacing=2)
+    L.group(title, class_="title")
     if headline:
-        L.text(22, 42, headline, 8.5, "#ffd27a", font_weight="700", class_="pulse")
+        line = Layer()
+        line.text(22, 42, headline, 8.5, "#ffd27a", font_weight="700", class_="pulse")
+        L.group(line, class_="headline")
     else:
         L.text(22, 42, "each repo is a building · commits upgrade it · contributions are XP",
-               8.5, "#d6cfee")
+               8.5, "#d6cfee", class_="fine")
     bar_x, bar_w = W - 196, 120
-    L.rect(bar_x - 40, 15, 34, 16, "#e8b440", rx=8)
-    L.text(bar_x - 23, 26.5, f"LV {lv.level}", 8.5, "#1a1430", text_anchor="middle",
-           font_weight="800")
-    L.rect(bar_x, 19, bar_w, 8, "#ffffff", opacity=0.18, rx=4)
-    L.rect(bar_x, 19, max(4.0, bar_w * lv.fraction), 8, "#3fb950", rx=4)
-    L.text(W - 22, 26.5, f"{lv.xp:,}/{lv.next:,} XP", 8.5, "#ffffff", text_anchor="end",
-           font_weight="700")
+    lvl = Layer()
+    lvl.rect(bar_x - 40, 15, 34, 16, "#e8b440", rx=8)
+    lvl.text(bar_x - 23, 26.5, f"LV {lv.level}", 8.5, "#1a1430", text_anchor="middle",
+             font_weight="800")
+    lvl.rect(bar_x, 19, bar_w, 8, "#ffffff", opacity=0.18, rx=4)
+    lvl.rect(bar_x, 19, max(4.0, bar_w * lv.fraction), 8, "#3fb950", rx=4)
+    lvl.text(W - 22, 26.5, f"{lv.xp:,}/{lv.next:,} XP", 8.5, "#ffffff", text_anchor="end",
+             font_weight="700")
+    L.group(lvl, class_="lvl")
     weather = c.w.weather.capitalize()
     temp = f" {c.w.temp_f}°F" if c.w.temp_f is not None else ""
     L.text(W - 22, 42, f"{st.streak_days}-day streak · {len(st.repos)} repos · "
                        f"{st.contributions_year} this year · Philly {clock_text(c.w.when)} · "
-                       f"{weather}{temp}", 8.5, "#d6cfee", text_anchor="end")
+                       f"{weather}{temp}", 8.5, "#d6cfee", text_anchor="end", class_="fine")
 
 
 def _heat(n: int, peak: int) -> str:
@@ -93,8 +112,9 @@ def timeline(L: Layer, c: Ctx) -> tuple[float, float] | None:
     L.rect(0, STRIP_Y, W, H - STRIP_Y, "#0a0a1c", opacity=0.92)
     L.line(0, STRIP_Y, W, STRIP_Y, "#ffffff", 0.6, opacity=0.12)
     mid = STRIP_Y + (H - STRIP_Y) / 2 + 1
-    L.text(20, mid - 3, "LAST 26 WEEKS", 8, "#d6cfee", font_weight="700", letter_spacing=1)
-    L.text(20, mid + 9, f"{sum(weeks)} contributions", 8, "#8b86a8")
+    L.text(20, mid - 3, "LAST 26 WEEKS", 8, "#d6cfee", font_weight="700", letter_spacing=1,
+           class_="fine")
+    L.text(20, mid + 9, f"{sum(weeks)} contributions", 8, "#8b86a8", class_="fine")
     if weeks:
         x0, x1 = 150, 650
         L.line(x0, mid, x1, mid, "#3a3658", 3, stroke_linecap="round")
@@ -105,10 +125,11 @@ def timeline(L: Layer, c: Ctx) -> tuple[float, float] | None:
             r = 2.2 + 3.2 * (n / max(peak, 1)) ** 0.5
             L.circle(x, mid, r, _heat(n, peak))
             if n == peak:
-                L.text(x, mid - 9, f"PEAK {n}", 7, "#5ff07e", text_anchor="middle", font_weight="700")
+                L.text(x, mid - 9, f"PEAK {n}", 7, "#5ff07e", text_anchor="middle",
+                       font_weight="700", class_="fine")
         now = x0 + (len(weeks) - 1) * step
         L.circle(now, mid, 8, "none", stroke="#ffd27a", stroke_width=1.4, class_="flick")
-        L.text(now + 12, mid + 3, "NOW", 7.5, "#ffd27a", font_weight="700")
+        L.text(now + 12, mid + 3, "NOW", 7.5, "#ffd27a", font_weight="700", class_="fine")
         # A little train that rides along the route while the camera follows the real one.
         m = Layer()
         m.rect(-14, mid - 15, 14, 6, "#efe6f2", rx=2)
@@ -116,7 +137,7 @@ def timeline(L: Layer, c: Ctx) -> tuple[float, float] | None:
         m.rect(-11, mid - 14, 8, 2, "#ffd98a")
         L.group(m, class_="marker", transform=f"translate({now:.0f} 0)")
     L.text(W - 20, mid - 3, f"{st.merged_prs} PRs merged · {sum(r.stars for r in st.repos)} stars",
-           8, "#d6cfee", text_anchor="end", font_weight="700")
+           8, "#d6cfee", text_anchor="end", font_weight="700", class_="fine")
     commit = st.latest_commit if len(st.latest_commit) <= 34 else st.latest_commit[:33] + "…"
-    L.text(W - 20, mid + 9, f"latest: {commit}", 8, "#8b86a8", text_anchor="end")
+    L.text(W - 20, mid + 9, f"latest: {commit}", 8, "#8b86a8", text_anchor="end", class_="fine")
     return (x0, now) if weeks else None

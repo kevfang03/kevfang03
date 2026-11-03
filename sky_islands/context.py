@@ -49,12 +49,15 @@ class Ctx:
 
 def sign(L: Layer, x: float, y: float, text: str, col: str = "#ece8f8", size: float = 7.5,
          leader: float = 0) -> tuple[float, float, float, float]:
-    """A small dark label; returns its box (x0, y0, x1, y1)."""
+    """A small dark label; returns its box (x0, y0, x1, y1). Labels are too small to read
+    when the banner is shown at phone width, so they hide there (class "fine")."""
     w = len(text) * size * 0.6 + 10
+    g = Layer()
     if leader:
-        L.line(x, y + 4, x, y + 4 + leader, col, 0.7, opacity=0.55)
-    L.rect(x - w / 2, y - size - 1.5, w, size + 6, "#120e24", opacity=0.78, rx=3)
-    L.text(x, y + 1, text, size, col, text_anchor="middle", font_weight="700")
+        g.line(x, y + 4, x, y + 4 + leader, col, 0.7, opacity=0.55)
+    g.rect(x - w / 2, y - size - 1.5, w, size + 6, "#120e24", opacity=0.78, rx=3)
+    g.text(x, y + 1, text, size, col, text_anchor="middle", font_weight="700")
+    L.group(g, class_="fine")
     return (x - w / 2, y - size - 1.5, x + w / 2, y + 4.5)
 
 

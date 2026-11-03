@@ -16,6 +16,8 @@ out; time, weather, seasons and random events keep it alive between visits.
   are enough. The art leads.
 - Vector SVG with CSS animation only; every file under 600 KB; animation is turned off for
   viewers who prefer reduced motion.
+- **Phones:** shown at phone width the banner is a third of its size, so a media query inside
+  the SVG hides the labels and fine print and enlarges the title and level bar.
 
 ## Resources (all public GitHub data)
 
