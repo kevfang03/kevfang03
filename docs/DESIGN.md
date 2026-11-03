@@ -60,10 +60,12 @@ and ships are original designs; no characters or ships from existing franchises.
 
 ## Your companion
 
-An original sky sprite on the HQ roof terrace, next to you and the cat, that evolves with your
-level: **Puff** (a round cloud sprite with a leaf sprout), then **Drift** at level 5 (a fox-like
-sprite with a cloud tail and a brow crystal), then **Nimbus** at level 10 (winged, hovering, its
-crystal glowing after dark).
+An original sky kitsune on the HQ roof terrace, next to you and the cat, that grows more
+tails as you level up: **Puff** (a round kit with one tail and a leaf on its head), then
+**Drift** at level 5 (three tails, a brow crystal and a wisp of blue fox-fire), then
+**Nimbus** at level 10 (nine tails rising like a crown; it hovers with fox-fire circling it
+and its crystal glows after dark). Snowy cream fur with sky-blue tail tips, peach ears and
+gold markings, outlined so it reads at banner size.
 
 ## The Cloudliner
 
