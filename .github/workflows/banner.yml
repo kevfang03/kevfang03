@@ -35,13 +35,15 @@ jobs:
           uv run --no-dev python -m sky_islands live
           --login "${{ github.repository_owner }}"
           --out "$RUNNER_TEMP/sky-islands.svg"
+          --views "$RUNNER_TEMP/views"
 
       - name: Publish to the output branch
         run: |
           git checkout --orphan output
           git rm -rf --quiet .
           cp "$RUNNER_TEMP/sky-islands.svg" sky-islands.svg
-          git add sky-islands.svg
+          cp -r "$RUNNER_TEMP/views" views
+          git add sky-islands.svg views
           git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
               commit --quiet -m "Redraw the banner"
