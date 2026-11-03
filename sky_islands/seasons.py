@@ -1,6 +1,7 @@
 """What each season adds on top of the trees, crops and flowers that already change colour:
 
-- **Winter:** snow on every island's top, with icicles hanging off the lip.
+- **Winter:** snow over the grass of every island (see context.py), a bright snow line
+  along each top and icicles hanging off the lip.
 - **Spring:** blossom petals drifting down from the town's trees.
 - **Summer:** butterflies over the town by day.
 - **Fall:** leaves tumbling down from the trees.
@@ -62,7 +63,7 @@ def fallers(L: Layer, c: Ctx, s: Shape) -> None:
     if now not in ("spring", "fall"):
         return
     cols = PETALS if now == "spring" else LEAVES
-    for k in range(9):
+    for k in range(6):
         x = s.x0 + 70 + (s.w - 140) * ((k * 41) % 100) / 100
         y = s.ground(x) - 30 - (k % 3) * 6
         col = cols[k % len(cols)]

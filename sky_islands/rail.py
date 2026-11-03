@@ -67,28 +67,50 @@ def _load(g: Layer, c: Ctx, kind: str, x: float, y: float) -> None:
         g.poly([(x + 2.8, y - 4.2), (x + 4.8, y), (x + 2.8, y)], "#ffffff", opacity=0.35)
 
 
-def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = False) -> Layer:
-    """A streamlined sky liner with its nose at x=0: a navy body with gold pinstripes, a
-    silver roof and a glowing band of windows. Coaches join as you level up; the cargo wagon
-    carries this week's resources; the glass-domed observation car brings up the rear."""
+def _passengers(g: Layer, c: Ctx, x0: float, x1: float, top: float, seed: int) -> None:
+    """Heads and shoulders in some of the windows, dark against daylight and warm at night."""
+    sil = "#5a3a20" if c.P["lamps"] else "#16304f"
+    x, k = x0, seed
+    while x < x1 - 3:
+        if k % 3 != 1:
+            g.circle(x + 2.2, top + 4.4, 0.95, sil, opacity=0.6)
+            g.rect(x + 1, top + 5.3, 2.4, 1.5, sil, rx=0.7, opacity=0.6)
+        x += 4.4
+        k += 1
+
+
+def _hover_pods(g: Layer, c: Ctx, x0: float, x1: float, y: float, glow: str) -> None:
+    """Two maglev pods under a car, glowing cyan underneath, with a soft halo on the rail."""
+    g.ellipse((x0 + x1) / 2, y + 0.6, (x1 - x0) / 2, 2, glow)
+    for px in (x0 + 7, x1 - 7):
+        g.rect(px - 4.5, y - 3.4, 9, 2.6, "#0a1424", rx=1.3)
+        g.rect(px - 3.6, y - 1.2, 7.2, 0.9, "#7fe3ff", rx=0.45, opacity=0.95)
+
+
+def _body(c: Ctx, cars: tuple[str, ...], load: Cargo) -> Layer:
+    """The Skyliner, nose at x=0: a streamlined navy maglev with brass trim, riding on glowing
+    hover pods instead of wheels. Coaches join as you level up, with passengers in the
+    windows; the cargo wagon carries this week's resources; the glass-domed observation car
+    brings up the rear. After dark a soft headlight beam fades out ahead of it, and on the
+    move it leaves a misty wake of cloud."""
     g = Layer()
+    y = 0.0  # drawn on its rail at y=0 and placed by _train
     lamps = c.P["lamps"]
     length = train_length(cars)
     body = c.defs.linear("liner", [(0, c.lit("#3d74ad")), (0.45, c.lit("#1f4673")),
                                    (1, c.lit("#112844"))])
     roof, gold, skirt = c.lit("#e6edf6"), c.lit("#f4c76a"), c.lit("#0c1a30")
+    brass = c.lit("#d9a441")
     glass = "#ffd98a" if lamps else c.lit("#b4dcf8")
-    top, bot = y - 15, y - 2.6
-    if moving:  # a soft streak of light trailing the last car
-        g.rect(-length - 90, top + 3, 90, 7, c.defs.linear(
-            "trail", [(0, "#ffffff", 0), (1, "#fff6dc", 0.3 if lamps else 0.22)], x2=1, y2=0),
-            rx=3.5, class_="trail")
+    pod_glow = c.defs.radial("podglow", [(0, "#7fe3ff", 0.55), (1, "#7fe3ff", 0)])
+    top, bot = y - 15, y - 3.4
     if lamps:
         g.ellipse(-length / 2, y + 2, length / 2 + 6, 3, "#ffcf7a", opacity=0.22)
     for k, kind in enumerate(cars):
         x0 = -(k + 1) * CAR_W - k * GAP
         x1 = x0 + CAR_W
         last = k == len(cars) - 1
+        _hover_pods(g, c, x0, x1, y, pod_glow)
         if k:
             g.rect(x1, top + 3, GAP, bot - top - 5, skirt)
         win_x0, win_x1 = x0 + 3, x1 - 3
@@ -102,25 +124,32 @@ def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = 
                 sx += 6.6
             if load.crystals and c.dark:
                 c.glow(g, x0 + 23, wy - 3, 8, "#7fe3ff", 0.7, class_="pulse")
-            g.line(x0, wy, x1, wy, roof, 1.2)
+            g.line(x0, wy, x1, wy, brass, 1.2)
             g.line(x0 + 1, wy + 3.5, x1 - 1, wy + 3.5, gold, 0.9)
             if last:
                 g.circle(x0 + 1.4, y - 7, 1, "#ff6a5a")
         else:
-            if kind == "engine":  # a long swept nose
+            if kind == "engine":  # a long swept nose with a brass-trimmed windscreen
                 g.path(f"M{x0} {bot}V{top + 3}Q{x0} {top} {x0 + 3} {top}H{x1 - 9}"
-                       f"Q{x1 - 1} {top + 0.5} {x1 + 7} {y - 9}Q{x1 + 12} {y - 6} {x1 + 12} "
-                       f"{bot - 1}Q{x1 + 12} {bot} {x1 + 10} {bot}Z", body)
+                       f"Q{x1 - 1} {top + 0.5} {x1 + 7} {y - 9}Q{x1 + 13} {y - 6.5} {x1 + 13} "
+                       f"{bot - 1}Q{x1 + 13} {bot} {x1 + 11} {bot}Z", body)
                 g.path(f"M{x1 - 9} {top + 1.6}Q{x1 - 2} {top + 2} {x1 + 4} {y - 9.5}H{x1 - 9}Z",
                        "#0b1626")
+                g.path(f"M{x1 - 9.5} {top + 1.2}Q{x1 - 2} {top + 1.6} {x1 + 4.6} {y - 9.4}",
+                       stroke=brass, stroke_width=0.8)
                 g.path(f"M{x1 - 7} {top + 2.4}Q{x1 - 2} {top + 3} {x1 + 1} {y - 10.5}",
                        stroke="#ffffff", stroke_width=0.7, opacity=0.5)
-                g.path(f"M{x1 + 4} {y - 6.6}l3 -1.6l3 1.6", stroke=gold, stroke_width=0.9)
-                g.circle(x1 + 10.4, y - 5, 1.3, "#fff6d0")
+                # A swept brass fin on the roof and winged chevrons on the nose.
+                g.path(f"M{x0 + 9} {top}l5 -4.5h3.4l-1.4 4.5z", brass)
+                g.path(f"M{x1 + 3} {y - 6.4}l3.2 -1.8l3.2 1.8M{x1 + 4.4} {y - 4.8}l1.8 -1l1.8 1",
+                       stroke=gold, stroke_width=0.9)
+                g.circle(x1 + 11.2, y - 5.2, 1.5, "#fff6d0")
                 if lamps:
-                    g.poly([(x1 + 11, y - 5), (x1 + 80, y - 14), (x1 + 80, y + 4)], "#fff3c4",
-                           opacity=0.16)
-                    c.glow(g, x1 + 10.4, y - 5, 9, "#fff3c4", 0.95)
+                    beam = c.defs.linear("beam", [(0, "#fff3c4", 0.42), (0.35, "#fff3c4", 0.16),
+                                                  (1, "#fff3c4", 0)], x2=1, y2=0)
+                    g.path(f"M{x1 + 12} {y - 6.4}L{x1 + 150} {y - 19}V{y + 7}L{x1 + 12} {y - 4}Z",
+                           beam, class_="flick", style="animation-duration:3.4s")
+                    c.glow(g, x1 + 11.2, y - 5.2, 10, "#fff3c4", 0.95)
                 win_x1 = x1 - 11
             elif kind == "dome":  # a rounded tail and a glass dome
                 g.path(f"M{x1} {bot}V{top}H{x0 + 6}Q{x0 - 3} {top + 0.5} {x0 - 3} {y - 8}"
@@ -128,8 +157,8 @@ def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = 
                 g.path(f"M{x0 + 7} {top}A10 6 0 0 1 {x0 + 25} {top}Z", glass,
                        opacity=0.85 if lamps else 0.7)
                 for dx in (11, 16, 21):
-                    g.line(x0 + dx, top, x0 + dx, top - 4.6, c.lit("#c9d3e2"), 0.5)
-                g.path(f"M{x0 + 7} {top}A10 6 0 0 1 {x0 + 25} {top}", stroke=roof,
+                    g.line(x0 + dx, top, x0 + dx, top - 4.6, brass, 0.5)
+                g.path(f"M{x0 + 7} {top}A10 6 0 0 1 {x0 + 25} {top}", stroke=brass,
                        stroke_width=0.8)
                 if lamps:
                     c.glow(g, x0 + 16, top - 2, 10, "#ffcf7a", 0.6)
@@ -140,6 +169,8 @@ def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = 
             rx0, rx1 = max(x0, win_x0 - 2), min(x1, win_x1 + 2)
             g.rect(rx0, top - 1.1, rx1 - rx0, 2.2, roof, rx=1.1)
             g.rect(win_x0, top + 3, win_x1 - win_x0, 3.8, glass, rx=1)
+            if kind != "engine":
+                _passengers(g, c, win_x0, win_x1, top, k)
             x = win_x0 + 4.4
             while x < win_x1 - 1:
                 g.line(x, top + 3, x, top + 6.8, "#16304f", 0.6)
@@ -149,12 +180,29 @@ def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = 
                        filter=c.defs.blur(1.5))
             g.line(x0 + 1, top + 8.5, (x1 + 9 if kind == "engine" else x1 - 1), top + 8.5, gold,
                    0.9)
-            g.line(x0 + 1, top + 9.9, x1 - 1, top + 9.9, gold, 0.4, opacity=0.7)
+            g.line(x0 + 1, top + 9.9, x1 - 1, top + 9.9, brass, 0.4, opacity=0.8)
             g.line(x0 + 2, top + 0.9, x1 - 2, top + 0.9, c.P["rim"], 0.6, opacity=0.6)
         g.rect(x0 + 1.5, bot - 1.6, CAR_W - 3, 2.2, skirt, rx=1)
-        for wx in (x0 + 6, x1 - 6):
-            g.circle(wx, y - 1.4, 1.5, "#0a0a14")
-            g.circle(wx, y - 1.4, 0.6, c.lit("#8a8fa8"))
+    return g
+
+
+def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = False) -> Layer:
+    """The Skyliner on a rail at height y. It is drawn once and reused by the overview and
+    the ride, which keeps the file small; on the move a light streak and a misty wake of
+    cloud trail the last car."""
+    ref = c.defs.shape("skyliner", _body(c, cars, load).svg())
+    g = Layer()
+    if moving:
+        length, top = train_length(cars), y - 15
+        wake = Layer()
+        wake.rect(-length - 90, top + 3, 90, 7, c.defs.linear(
+            "trail", [(0, "#ffffff", 0), (1, "#fff6dc", 0.3 if c.P["lamps"] else 0.22)],
+            x2=1, y2=0), rx=3.5)
+        for k in range(3):
+            wake.circle(-length - 6 - k * 9, y - 3 - k, 3 + k, "#ffffff", opacity=0.35,
+                        class_="wake", style=f"animation-delay:-{k * 0.45:.2f}s")
+        g.group(wake, class_="trail")
+    g.el("use", href=ref, y=y)
     return g
 
 

@@ -100,5 +100,16 @@ def test_sunset_backdrop_fades_out_so_no_edge_crosses_the_sky():
 
 def test_seasonal_fallers_are_few_and_never_fill_the_frame():
     svg = render(demo_world("day", day=(2026, 10, 10)))
-    assert svg.count('class="drop"') == 9
+    assert svg.count('class="drop"') == 6
     assert "petals1" not in svg
+
+
+def test_winter_covers_the_grass_and_has_no_fireflies():
+    from sky_islands import palette as pal
+    from sky_islands.context import _palette
+
+    assert _palette("day", True)["grass"] != pal.PHASE["day"]["grass"]
+    assert _palette("day", False)["grass"] == pal.PHASE["day"]["grass"]
+    winter = render(demo_world("night", day=(2027, 1, 20)))
+    summer = render(demo_world("night", day=(2027, 7, 10)))
+    assert winter.count("#e6ff9a") < summer.count("#e6ff9a")

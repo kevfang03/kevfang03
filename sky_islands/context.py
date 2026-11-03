@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import random
 from dataclasses import dataclass
 
@@ -13,6 +14,16 @@ W, H = 1000, 560
 HEADER_H = 54
 STRIP_Y = 522  # top of the activity timeline along the bottom
 FONT = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace"
+
+
+@functools.cache
+def _palette(phase: str, winter: bool) -> dict:
+    """The phase's colours; in winter the grass on every island lies under snow."""
+    if not winter:
+        return pal.PHASE[phase]
+    colours = dict(pal.PHASE[phase])
+    colours["grass"] = pal.mix(colours["grass"], pal.lit_by("#e8eef8", phase), 0.62)
+    return colours
 
 
 @dataclass
@@ -29,7 +40,7 @@ class Ctx:
 
     @property
     def P(self) -> dict:
-        return pal.PHASE[self.w.phase]
+        return _palette(self.w.phase, self.w.when.month in (12, 1, 2))
 
     @property
     def dark(self) -> bool:

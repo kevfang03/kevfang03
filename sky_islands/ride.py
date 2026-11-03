@@ -172,7 +172,7 @@ def wild_side(L: Layer, c: Ctx) -> None:
         if c.dark:
             c.glow(L, mx, base - 7, 8, cap, 0.8, class_="pulse",
                    style=f"animation-delay:-{k * .4:.1f}s")
-    if c.dark:
+    if c.dark and 5 <= c.w.when.month <= 9:  # fireflies on warm nights
         for _ in range(16):
             x = c.rng.uniform(s.x0 + 40, s.x1 - 40)
             y = s.ground(x) - c.rng.uniform(10, 70)

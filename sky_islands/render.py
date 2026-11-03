@@ -42,6 +42,9 @@ CSS = (
     "@keyframes smoke{0%{transform:translateY(0);opacity:0}30%{opacity:.5}"
     "100%{transform:translateY(-14px);opacity:0}}"
     "@keyframes spin{to{transform:rotate(360deg)}}"
+    "@keyframes wake{from{transform:translateX(0) scale(.6);opacity:.5}"
+    "to{transform:translateX(-28px) scale(1.5);opacity:0}}"
+    ".wake{animation:wake 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}"
     "@keyframes wave{from{transform:rotate(-25deg)}to{transform:rotate(20deg)}}"
     ".wave{animation:wave .7s ease-in-out infinite alternate;transform-box:fill-box;"
     "transform-origin:0% 100%}"
@@ -70,8 +73,8 @@ CSS = (
 )
 
 def fireflies(L: Layer, c: Ctx, s: island.Shape) -> None:
-    """Tiny drifting lights over the grass after dark."""
-    if not c.dark:
+    """Tiny drifting lights over the grass on warm nights, May to September."""
+    if not c.dark or not 5 <= c.w.when.month <= 9:
         return
     for _ in range(22):
         x = c.rng.uniform(s.x0 + 30, s.x1 - 30)

@@ -64,7 +64,9 @@ crystal glowing after dark).
 
 ## The sky train
 
-A navy-and-gold liner that runs the loop around the islands. It grows with you: the engine,
+The Skyliner, a navy-and-gold maglev with brass trim that floats on glowing hover pods and
+runs the loop around the islands, with passengers in its windows, a soft headlight beam
+after dark and a misty wake when it moves. It grows with you: the engine,
 one coach per two levels (up to four), a cargo wagon, and from level 4 a glass-domed
 observation car. The cargo wagon carries this week's resources: wheat sacks for contributions
 this week, logs for streak days, stone blocks for merged pull requests and crystals for stars
@@ -125,11 +127,6 @@ The header names whatever rare or dated event is happening, rarest first:
 | Lighthouse flash | the day of a release |
 | Anniversary | GitHub account anniversary |
 | Night owl | a commit after midnight keeps the balcony laptop glowing; no commits yet today and the figure naps |
-
-## Companion
-
-A dragon pet that grows with level: egg, then hatchling, then young dragon, then a full dragon
-circling the islands. Navy and gold; an original design, not any school's logo.
 
 ## Customization (`island.toml`, non-secret)
 
