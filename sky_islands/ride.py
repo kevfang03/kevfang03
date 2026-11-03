@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import itertools
 
+from . import creatures
 from . import palette as pal
 from .clock import season
 from .context import Ctx, H, W, sign
@@ -227,11 +228,12 @@ def backdrop(L: Layer, c: Ctx) -> None:
     for _ in range(120):
         sx, sy = x + c.rng.uniform(-480, 480), c.rng.uniform(50, 380)
         L.circle(sx, sy, c.rng.choice((0.6, 0.8, 1.1)), "#ffffff", opacity=0.85)
-    L.raw(f'<g opacity=".5"><path d="M0 0q34 -16 80 -5q16 5 28 0l12 -9l-2 11l9 7l-14 -2q-16 7 -34 7'
-          f'q-46 2 -79 -9z" fill="#3a2f7a"/><circle cx="18" cy="-1" r="1.4" fill="#9fd8ff"/>'
-          f'<circle cx="34" cy="2" r="1.2" fill="#9fd8ff"/><circle cx="50" cy="3" r="1.2" fill="#9fd8ff"/>'
+    # The sky whale swimming left through the star river, and jellies rising below it.
+    L.raw(f'<g opacity=".6"><g transform="scale(-.5 .5)">{creatures.whale(c, True).svg()}</g>'
           f'<animateMotion dur="40s" repeatCount="indefinite" '
           f'path="M{x + 260:.0f} 120Q{x:.0f} 90 {x - 300:.0f} 140"/></g>')
+    creatures.jellies(L, c, ((x - 230, 350, 1.2), (x - 160, 372, 0.9), (x + 120, 360, 1.3),
+                             (x + 190, 384, 0.8), (x + 40, 395, 1.0)))
     # West side: the sun going down over far mountains.
     x = at(3)
     L.rect(x - 520, 0, 1100, H, c.defs.linear("westsky", [(0, "#ff9a60", 0), (0.3, "#ff9a60", 0.35),
@@ -241,6 +243,9 @@ def backdrop(L: Layer, c: Ctx) -> None:
     L.poly([(x - 500, 400), (x - 380, 300), (x - 260, 360), (x - 120, 280), (x + 20, 350), (x + 160, 290),
             (x + 320, 360), (x + 560, 320), (x + 560, 420), (x - 500, 420)],
            c.haze(c.P["rock"][0], 0.55), opacity=0.8)
+    # A cargo airship heading home into the sunset.
+    L.raw(f'<g transform="translate({x - 150:.0f} 150) scale(.8)"><g class="drift">'
+          f'{creatures.airship(c).svg()}</g></g>')
 
 
 # ---------------------------------------------------------------- the track and the train

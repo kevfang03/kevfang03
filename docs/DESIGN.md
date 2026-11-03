@@ -87,7 +87,9 @@ Rolled once per hourly redraw with a seed from the date and hour, so each image 
 | Dragon flyover | every loop while your streak is 7 days or more |
 | Starfighter squadron | every loop, as the overview opens |
 | Golden "shiny" dragon | very rare (about 1 in 200) |
-| Sky whale drifting past | very rare, night only |
+| Sky whale and calf | every overview, gliding far behind the islands; glowing spots at night |
+| Sky jellies | always, rising out of the cloud sea between islands; lit up at night |
+| Cargo airship | always, drifting over the Server Farm's sunset on the ride |
 | Meteor shower | real dates (Perseids around Aug 12, Geminids around Dec 14) |
 | Big moon | real full-moon nights |
 | Aurora | rare winter nights |

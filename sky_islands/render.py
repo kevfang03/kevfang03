@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 from xml.sax.saxutils import escape
 
-from . import camera, companion, hud, island, rail, ride, sky, town, wonders, world
+from . import camera, companion, creatures, hud, island, rail, ride, sky, town, wonders, world
 from .context import FONT, Ctx, H, W
 from .model import World
 from .progress import current_quest, level_info
@@ -30,6 +30,9 @@ CSS = (
     ".fall{animation:fall .8s linear infinite}.sway{animation:sway 2.4s ease-in-out infinite alternate}"
     ".bob{animation:bob 3s ease-in-out infinite alternate}.smoke{animation:smoke 3s ease-out infinite}"
     ".spin{animation:spin 7s linear infinite;transform-box:fill-box;transform-origin:center}"
+    "@keyframes radar{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.12)}}"
+    ".radar{animation:radar 3.2s ease-in-out infinite;transform-box:fill-box;"
+    "transform-origin:center}"
     ".fa,.fb{animation:blink 1.4s steps(1) infinite}.fb{animation-delay:-.7s}"
     "@keyframes flock{from{transform:translate(-80px,20px)}to{transform:translate(1040px,-30px)}}"
     ".flock{animation:flock 40s linear infinite}"
@@ -92,8 +95,10 @@ def render(w: World) -> str:
     far = Layer()
     sky.sky_clouds(far, c)
     island.far_islands(far, c)
+    creatures.whales(far, c)
     sky.birds(far, c)
     world.locked_islands(far, c, labels)
+    creatures.jellies(far, c)
     near = Layer()
     world.flying_cars(near, c)
     near.group(_with_labels(c, world.philly), id="isl-philly")
@@ -152,6 +157,6 @@ def render(w: World) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{camera.css(marker_span)}</style>{defs.svg()}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )
