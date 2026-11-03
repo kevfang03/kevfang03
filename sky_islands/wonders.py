@@ -18,7 +18,7 @@ from .svg import Layer
 
 DESIGN_W = 150  # islands are drawn this wide and scaled to fit
 DRAGON_STREAK = 7  # the dragon flies on days your streak is at least this long
-DRAGON_WINDOW = (0.44, 0.58)  # when in the loop it crosses the sky (over the wild side)
+DRAGON_CROSSING = 0.14  # the share of the loop the dragon takes to cross the sky
 SQUADRON_WINDOW = (0.02, 0.12)  # when the starfighters cross (during the overview)
 
 
@@ -255,6 +255,17 @@ def _timing(window: tuple[float, float]) -> str:
             f'keyPoints="0;0;1;1" keyTimes="0;{a};{b};1"')
 
 
+def dragon_window() -> tuple[float, float]:
+    """When in the loop the dragon crosses: centred on the train's stop at the wild side,
+    so it flies over while the train stands still."""
+    # Imported here: the camera module imports the ride, which needs this module.
+    from .camera import schedule
+
+    wild = next(s for s in schedule() if s.key == "wild")
+    mid = (wild.arrive + wild.depart) / 200
+    return mid - DRAGON_CROSSING / 2, mid + DRAGON_CROSSING / 2
+
+
 def dragon_flight(L: Layer, c: Ctx) -> None:
     """The sky dragon: a long emerald serpent with gold bands, fins and whiskers, weaving
     across the sky. Its body is a chain of segments that follow the head along one path."""
@@ -297,7 +308,7 @@ def dragon_flight(L: Layer, c: Ctx) -> None:
         head = '<circle cx="9" cy="-2.6" r="8" fill="#fff3a0" opacity=".25"/>' + head
     # Each segment trails the head by `lag` seconds. Begin times are negative so every
     # segment is already on its (off-screen) path when the image loads.
-    timing = _timing(DRAGON_WINDOW)
+    timing = _timing(dragon_window())
     out = []
     for k, seg in [*parts, (0, head)]:
         out.append(f'<g>{seg}<animateMotion {timing} begin="{(k - n) * lag:.2f}s" '

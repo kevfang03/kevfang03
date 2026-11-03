@@ -9,7 +9,7 @@ from . import palette as pal
 from .context import Ctx
 from .svg import Layer
 
-# The overview shows from 92% of the loop, through the wrap, to 13.5%: about 18 seconds. The
+# The overview shows from 92% of the loop, through the wrap, to 13.5%: about 21 seconds. The
 # whales glide across during that stretch and slip back while the ride hides them.
 WHALE_FROM, WHALE_TO = (372, 96), (548, 88)
 # In the open gaps between the islands, where the cloud sea shows through.

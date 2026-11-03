@@ -68,6 +68,18 @@ observation car. The cargo wagon carries this week's resources: wheat sacks for 
 this week, logs for streak days, stone blocks for merged pull requests and crystals for stars
 (up to three of each).
 
+On the ride it stops at three stations and waits four seconds at each (the loop is 96
+seconds). Every moment runs on the loop's clock, so it plays exactly while the train stands
+there, and a sign over each platform shows the number that builds that place:
+
+| Station | While the train waits | Sign |
+|---|---|---|
+| Stadium | fireworks over the stands; while locked, a glint on the padlock | all-time contributions, or how many to go |
+| Wild side | sky jellies rise past the forest, the dragon flies over; once open, a starfighter lifts off the Starport and petals blow off the Shrine | current streak |
+| Server Farm | a drone lowers a crate into the cargo wagon | contributions this year |
+
+The town's station master waves the train off and back in.
+
 ## Living world
 
 - **Time:** Philly time picks dawn, day, golden hour, dusk or night, from real sunrise and sunset.
@@ -84,7 +96,7 @@ Rolled once per hourly redraw with a seed from the date and hour, so each image 
 | Shooting stars | most clear nights |
 | Sky train between islands | always, about once a minute |
 | Airship arrivals | one per pull request merged this week |
-| Dragon flyover | every loop while your streak is 7 days or more |
+| Dragon flyover | every loop while your streak is 7 days or more, during the wild-side stop |
 | Starfighter squadron | every loop, as the overview opens |
 | Golden "shiny" dragon | very rare (about 1 in 200) |
 | Sky whale and calf | every overview, gliding far behind the islands; glowing spots at night |

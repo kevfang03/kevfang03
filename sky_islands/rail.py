@@ -82,7 +82,7 @@ def _train(c: Ctx, y: float, cars: tuple[str, ...], load: Cargo, moving: bool = 
     if moving:  # a soft streak of light trailing the last car
         g.rect(-length - 90, top + 3, 90, 7, c.defs.linear(
             "trail", [(0, "#ffffff", 0), (1, "#fff6dc", 0.3 if lamps else 0.22)], x2=1, y2=0),
-            rx=3.5)
+            rx=3.5, class_="trail")
     if lamps:
         g.ellipse(-length / 2, y + 2, length / 2 + 6, 3, "#ffcf7a", opacity=0.22)
     for k, kind in enumerate(cars):

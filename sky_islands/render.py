@@ -5,7 +5,20 @@ from __future__ import annotations
 import random
 from xml.sax.saxutils import escape
 
-from . import camera, companion, creatures, hud, island, rail, ride, sky, town, wonders, world
+from . import (
+    camera,
+    companion,
+    creatures,
+    hud,
+    island,
+    rail,
+    ride,
+    sky,
+    stations,
+    town,
+    wonders,
+    world,
+)
 from .context import FONT, Ctx, H, W
 from .model import World
 from .progress import current_quest, level_info
@@ -25,6 +38,9 @@ CSS = (
     "@keyframes smoke{0%{transform:translateY(0);opacity:0}30%{opacity:.5}"
     "100%{transform:translateY(-14px);opacity:0}}"
     "@keyframes spin{to{transform:rotate(360deg)}}"
+    "@keyframes wave{from{transform:rotate(-25deg)}to{transform:rotate(20deg)}}"
+    ".wave{animation:wave .7s ease-in-out infinite alternate;transform-box:fill-box;"
+    "transform-origin:0% 100%}"
     ".tw{animation:tw 4s steps(1) infinite}.av{animation:blink 1.6s steps(1) infinite}"
     ".shoot{animation:shoot 10s linear infinite}.flick{animation:flicker 2s ease-in-out infinite}"
     ".fall{animation:fall .8s linear infinite}.sway{animation:sway 2.4s ease-in-out infinite alternate}"
@@ -116,7 +132,7 @@ def render(w: World) -> str:
     over.add(near)
     L.group(over, class_="over")
     # The ride: one lap around the island, revealed after the first fade.
-    bg, far, strip = ride.draw_world(c)
+    bg, far, strip, station_css = ride.draw_world(c)
     trip = Layer()
     trip.group(bg, class_="ride-bg")
     # Only the half of the loop across the island shows; it fades out towards the sides.
@@ -127,7 +143,10 @@ def render(w: World) -> str:
     trip.group(across, opacity=0.5,
                mask=defs.mask("farmask", f'<rect width="{W}" height="{H}" fill="{fade}"/>'))
     trip.group(strip, class_="ride-world")
+    crate, drone, delivery_css = stations.delivery(c)
+    trip.add(crate)
     trip.add(ride.train(c))
+    trip.add(drone)
     L.group(trip, class_="ride")
     # Things that cross the whole sky, whatever the camera is doing.
     wonders.squadron(L, c)
@@ -157,6 +176,7 @@ def render(w: World) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}</style>{defs.svg()}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}"
+        f"</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )

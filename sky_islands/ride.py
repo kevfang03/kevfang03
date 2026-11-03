@@ -48,6 +48,10 @@ FIELDS = Shape(cx=3500, top=300, w=760, depth=260)
 # Scale railway parts drawn at overview size up to the ride's size, keeping the rail height.
 TRACK_SPACE = f"translate(0 {RAIL_Y * (1 - SCALE):.1f}) scale({SCALE})"
 
+# Stations the train stops at on the way round: (key, the strip's x the train is centred on).
+# The wild-side stop sits between the Starport and the Shrine, so both are in view.
+STOPS = (("stadium", STADIUM_AT + STADIUM.w * SCALE / 2), ("wild", WILD.cx), ("farm", FIELDS.cx))
+
 SIDES = (  # (centre x, label) for the signs that name each side as it comes into view
     (760, "FRONT · THE TOWN"), (1600, "EAST · STADIUM BRIDGE"), (2400, "NORTH · THE WILD SIDE"),
     (3500, "WEST · THE SERVER FARM"),
@@ -298,19 +302,50 @@ def track(L: Layer, c: Ctx) -> None:
     for k, x in enumerate((HOME_END, STADIUM_AT, STADIUM_END, WILD.x0, WILD.x1, FIELDS.x0,
                            FIELDS.x1)):
         signal(g, c, x / s + (-6 if k % 2 == 0 else 6), y, green=k % 2 == 0)
-    # Town station: where the train waits when the ride begins.
+    # A platform wherever the train stops: the town station under its canopy, where it waits
+    # when the ride begins, and open halts with lamp posts on the way round, so the sky
+    # above the train stays clear.
     length = train_length(cars_for(c))
     nose = _nose_x(length)
-    x0, x1 = (nose - length * s - 20) / s, (nose + 20) / s
-    g.rect(x0, y + 1, x1 - x0, 5, c.lit("#b8aa94"))
-    for x in (x0 + 8, (x0 + x1) / 2, x1 - 8):
-        g.line(x, y + 1, x, y - 22, c.lit("#3a3050"), 1.4)
-    g.poly([(x0 - 5, y - 22), (x1 + 5, y - 22), (x1, y - 28), (x0, y - 28)], c.lit("#5a4a6a"))
-    if c.P["lamps"]:
-        for x in (x0 + 16, x1 - 16):
-            c.glow(g, x, y - 20, 14, "#ffd27a", 0.7)
+    for offset in (0, *(x - W / 2 for _, x in STOPS)):
+        ahead = 44 if offset == 0 else 20  # room past the nose for the station master
+        x0, x1 = (nose + offset - length * s - 20) / s, (nose + offset + ahead) / s
+        g.rect(x0, y + 1, x1 - x0, 5, c.lit("#b8aa94"))
+        if offset == 0:
+            for x in (x0 + 8, (x0 + x1) / 2, x1 - 8):
+                g.line(x, y + 1, x, y - 22, c.lit("#3a3050"), 1.4)
+            g.poly([(x0 - 5, y - 22), (x1 + 5, y - 22), (x1, y - 28), (x0, y - 28)],
+                   c.lit("#5a4a6a"))
+            lamps = [(x, y - 20) for x in (x0 + 16, x1 - 16)]
+        else:
+            for x in (x0 + 4, x1 - 4):
+                g.path(f"M{x} {y + 1}V{y - 24}h{3 if x < x1 - 10 else -3}",
+                       stroke=c.lit("#3a3050"), stroke_width=1.2)
+            lamps = [(x0 + 7, y - 23), (x1 - 7, y - 23)]
+        for lx, ly in lamps:
+            if offset:
+                g.rect(lx - 1.6, ly - 1, 3.2, 3, pal.WINDOW if c.P["lamps"] else c.lit("#c9b48a"))
+            if c.P["lamps"]:
+                c.glow(g, lx, ly, 14, "#ffd27a", 0.7)
     L.group(g, transform=TRACK_SPACE)
     sign(L, nose - length * s / 2, y - 56, "TOWN STATION", "#ffd27a")
+    _station_master(L, c, nose + 32, y + 1)
+
+
+def _station_master(L: Layer, c: Ctx, x: float, base: float) -> None:
+    """The town's station master on the platform, waving the train off and back in."""
+    L.line(x - 1.6, base, x - 1.6, base - 7, c.lit("#1f2a44"), 2)
+    L.line(x + 1.6, base, x + 1.6, base - 7, c.lit("#1f2a44"), 2)
+    L.rect(x - 4, base - 17, 8, 11, c.lit("#1f4673"), rx=2)
+    L.line(x - 4, base - 12, x + 4, base - 12, c.lit("#f4c76a"), 0.9)
+    L.circle(x, base - 20.5, 3.2, c.lit("#f2c9a8"))
+    L.rect(x - 3.8, base - 25, 7.6, 2.6, c.lit("#112844"), rx=1)
+    L.rect(x - 4.6, base - 22.8, 9.2, 1, c.lit("#112844"))
+    arm = Layer()
+    arm.path(f"M{x + 3.5} {base - 15}l5 -7", stroke=c.lit("#1f4673"), stroke_width=2,
+             stroke_linecap="round")
+    arm.circle(x + 8.8, base - 22.4, 1.5, c.lit("#f2c9a8"))
+    L.group(arm, class_="wave")
 
 
 def _nose_x(length: float) -> float:
@@ -347,8 +382,11 @@ def far_side(L: Layer) -> None:
               f'{y0:.0f}) scale({-FAR_K} {FAR_K})"/>')
 
 
-def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer]:
-    """The ride's distant backdrop, the far side of the loop, and the world strip."""
+def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer, str]:
+    """The ride's distant backdrop, the far side of the loop, the world strip, and the CSS
+    for what happens at each station."""
+    from . import stations  # imported here: stations needs the camera, which needs this module
+
     bg, far, world = Layer(), Layer(), Layer()
     backdrop(bg, c)
     far_side(far)
@@ -364,6 +402,7 @@ def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer]:
     wild_side(strip, c)
     server_farm(strip, c, FIELDS)
     track(strip, c)
+    css = stations.draw(strip, c)
     for x, text in SIDES:
         sign(strip, x, 506, text, "#ffffff", 9)
     world.group(strip, id="ride-strip")
@@ -371,5 +410,5 @@ def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer]:
     # Server Farm and the bridge home sit left of the station, and the ride ends where it began.
     for lap in (-PAN, PAN):
         world.raw(f'<use href="#ride-strip" transform="translate({lap} 0)"/>')
-    return bg, far, world
+    return bg, far, world, css
 
