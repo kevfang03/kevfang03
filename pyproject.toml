@@ -1,0 +1,19 @@
+[project]
+name = "desk-scene"
+version = "0.1.0"
+description = "Animated pixel-art desk scene for a GitHub profile README."
+requires-python = ">=3.12"
+# tzdata gives Windows (and slim Linux images) the time-zone database,
+# so Philadelphia time works everywhere.
+dependencies = ["tzdata>=2024.1"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
