@@ -9,6 +9,7 @@ from . import (
     camera,
     companion,
     creatures,
+    events,
     hud,
     island,
     rail,
@@ -105,8 +106,15 @@ def render(w: World) -> str:
     L = Layer()
     # Fixed backdrop: the sky barely changes as the camera moves.
     sky.sky(L, c)
+    ev = events.roll(w)
     sky.stars(L, c)
-    sky.sun_or_moon(L, c)
+    if ev.meteors:
+        events.meteors(L, c)
+    if ev.aurora:
+        events.aurora(L, c)
+    sky.sun_or_moon(L, c, ev.big_moon)
+    if ev.comet:
+        events.comet(L, c)
     labels: list = []
     # The overview: the whole archipelago, as the loop opens and closes.
     far = Layer()
@@ -115,6 +123,8 @@ def render(w: World) -> str:
     creatures.whales(far, c)
     sky.birds(far, c)
     world.locked_islands(far, c, labels)
+    if ev.fireworks:
+        events.fireworks(far, c, ev.fireworks)
     creatures.jellies(far, c)
     near = Layer()
     world.flying_cars(near, c)
@@ -151,12 +161,12 @@ def render(w: World) -> str:
     L.group(trip, class_="ride")
     # Things that cross the whole sky, whatever the camera is doing.
     wonders.squadron(L, c)
-    wonders.dragon_flight(L, c)
+    wonders.dragon_flight(L, c, ev.shiny)
     weather.overlay(L, c)
     L.rect(0, 0, W, H, defs.radial("vignette", [(0.55, "#000000", 0), (1, "#000000", 0.38)],
                                    r=0.75))
     L.rect(0, 0, W, H, "#05040f", class_="fade")
-    hud.header(L, c)
+    hud.header(L, c, ev.headline())
     marker_span = hud.timeline(L, c)
     L.rect(0, 0, W, H, "#808080", filter=defs.grain(), opacity=0.06)
     card = defs.clip("card", f'<rect width="{W}" height="{H}" rx="14"/>')
@@ -178,7 +188,7 @@ def render(w: World) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}"
         f"</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )

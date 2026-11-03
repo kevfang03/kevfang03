@@ -266,16 +266,19 @@ def dragon_window() -> tuple[float, float]:
     return mid - DRAGON_CROSSING / 2, mid + DRAGON_CROSSING / 2
 
 
-def dragon_flight(L: Layer, c: Ctx) -> None:
+def dragon_flight(L: Layer, c: Ctx, shiny: bool = False) -> None:
     """The sky dragon: a long emerald serpent with gold bands, fins and whiskers, weaving
-    across the sky. Its body is a chain of segments that follow the head along one path."""
-    if c.w.stats.streak_days < DRAGON_STREAK:
+    across the sky. Its body is a chain of segments that follow the head along one path.
+    The rare golden one flies whatever the streak."""
+    if c.w.stats.streak_days < DRAGON_STREAK and not shiny:
         return
     path = ("M-200 170C-60 90 60 240 200 150S420 70 560 160S800 250 960 140"
             "S1140 90 1260 150")
     body, belly, gold, fin = "#2fae6e", "#c8ecb0", "#f2c46d", "#1f7a4e"
     if c.dark:
         body, belly, fin = "#279a62", "#a8d8a0", "#1a6a44"
+    if shiny:
+        body, belly, gold, fin = "#f2c046", "#fff3c4", "#ffffff", "#c8902a"
     n, lag = 24, 0.11
     parts = []
     for k in range(n, 0, -1):
@@ -304,7 +307,7 @@ def dragon_flight(L: Layer, c: Ctx) -> None:
             'fill="none"/>'
             '<circle cx="9" cy="-2.6" r="1.8" fill="#fff3a0"/>'
             '<circle cx="9.4" cy="-2.6" r=".8" fill="#1a1622"/>')
-    if c.dark:
+    if c.dark or shiny:
         head = '<circle cx="9" cy="-2.6" r="8" fill="#fff3a0" opacity=".25"/>' + head
     # Each segment trails the head by `lag` seconds. Begin times are negative so every
     # segment is already on its (off-screen) path when the image loads.

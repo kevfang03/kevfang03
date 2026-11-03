@@ -50,15 +50,19 @@ def labels(L: Layer, items: list[Label]) -> None:
         sign(L, x, y, lb.text, lb.color, LABEL_SIZE, leader=max(0.0, lb.y - y))
 
 
-def header(L: Layer, c: Ctx) -> None:
+def header(L: Layer, c: Ctx, headline: str | None = None) -> None:
+    """The title, level and stats; a rare or dated event takes the tagline's place."""
     st = c.w.stats
     lv = level_info(st.contributions_total)
     L.rect(0, 0, W, HEADER_H + 10, c.defs.linear(
         "header", [(0, "#0a0a20", 0.82), (0.75, "#0a0a20", 0.5), (1, "#0a0a20", 0)]))
     L.text(22, 26, f"{st.login.upper()} · SKY ISLANDS", 13, "#ffffff", font_weight="800",
            letter_spacing=2)
-    L.text(22, 42, "each repo is a building · commits upgrade it · contributions are XP", 8.5,
-           "#d6cfee")
+    if headline:
+        L.text(22, 42, headline, 8.5, "#ffd27a", font_weight="700", class_="pulse")
+    else:
+        L.text(22, 42, "each repo is a building · commits upgrade it · contributions are XP",
+               8.5, "#d6cfee")
     bar_x, bar_w = W - 196, 120
     L.rect(bar_x - 40, 15, 34, 16, "#e8b440", rx=8)
     L.text(bar_x - 23, 26.5, f"LV {lv.level}", 8.5, "#1a1430", text_anchor="middle",

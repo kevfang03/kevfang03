@@ -52,18 +52,21 @@ def stars(L: Layer, c: Ctx) -> None:
                                          f"animation-duration:{9 + k * 5}s")
 
 
-def sun_or_moon(L: Layer, c: Ctx) -> None:
+def sun_or_moon(L: Layer, c: Ctx, big: bool = False) -> None:
+    """The sun by day; by night the moon in its real phase, drawn bigger when it is full."""
     if c.P["sun"] is None:
         x, y = MOON_AT
-        c.glow(L, x, y, 90, "#fff0dc", 0.35)
-        L.circle(x, y, 17, "#fff0dc")
+        k = 1.6 if big else 1.0
+        R = 17 * k
+        c.glow(L, x, y, 90 * k * (1.3 if big else 1), "#fff0dc", 0.45 if big else 0.35)
+        L.circle(x, y, R, "#fff0dc")
         for dx, dy, r in ((-5, -4, 3), (4, 5, 2.4), (6, -5, 1.6)):
-            L.circle(x + dx, y + dy, r, "#e8dcc0", opacity=0.7)
+            L.circle(x + dx * k, y + dy * k, r * k, "#e8dcc0", opacity=0.7)
         p = c.w.moon
-        off = -34 * (p / 0.5) if p < 0.5 else 34 * ((1 - p) / 0.5)
-        if abs(off) < 33:
-            clip = c.defs.clip("moon", f'<circle cx="{x}" cy="{y}" r="17"/>')
-            L.raw(f'<g clip-path="{clip}"><circle cx="{x + off:.1f}" cy="{y}" r="17.5" '
+        off = -2 * R * (p / 0.5) if p < 0.5 else 2 * R * ((1 - p) / 0.5)
+        if abs(off) < 2 * R - 1:
+            clip = c.defs.clip("moon", f'<circle cx="{x}" cy="{y}" r="{R:g}"/>')
+            L.raw(f'<g clip-path="{clip}"><circle cx="{x + off:.1f}" cy="{y}" r="{R + 0.5:g}" '
                   f'fill="{c.P["sky"][0]}" opacity=".94"/></g>')
         return
     x, y, col = c.P["sun"]

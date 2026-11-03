@@ -83,13 +83,15 @@ The town's station master waves the train off and back in.
 ## Living world
 
 - **Time:** Philly time picks dawn, day, golden hour, dusk or night, from real sunrise and sunset.
-- **Weather:** real weather from Open-Meteo: rain streaks, puddle glow, snow, fog.
+- **Weather:** real weather from Open-Meteo, with real sunrise and sunset: an overcast tint,
+  rain, storms with lightning, snow and fog. If the feed is down the sky is drawn clear.
 - **Seasons:** blossoms, summer fireflies, autumn leaves, snow.
 - **Holidays:** fireworks on July 4 and New Year's Eve, lights in December.
 
 ## Events
 
-Rolled once per hourly redraw with a seed from the date and hour, so each image is repeatable:
+Rolled once per hourly redraw with a seed from the date and hour, so each image is repeatable.
+The header names whatever rare or dated event is happening, rarest first:
 
 | Event | When |
 |---|---|
@@ -98,15 +100,17 @@ Rolled once per hourly redraw with a seed from the date and hour, so each image 
 | Airship arrivals | one per pull request merged this week |
 | Dragon flyover | every loop while your streak is 7 days or more, during the wild-side stop |
 | Starfighter squadron | every loop, as the overview opens |
-| Golden "shiny" dragon | very rare (about 1 in 200) |
+| Golden "shiny" dragon | about 1 in 200 redraws; flies even without a streak |
 | Sky whale and calf | every overview, gliding far behind the islands; glowing spots at night |
 | Sky jellies | always, rising out of the cloud sea between islands; lit up at night |
 | Cargo airship | always, drifting over the Server Farm's sunset on the ride |
 | Meteor shower | real dates (Perseids around Aug 12, Geminids around Dec 14) |
 | Big moon | real full-moon nights |
-| Aurora | rare winter nights |
-| Game day | stadium lights, crowd, opponent and start time |
-| Victory fireworks | the morning after a Philly win |
+| Aurora | about 1 in 12 clear winter nights (Dec to Feb) |
+| Comet | about 1 in 30 clear evenings |
+| Game day | stadium lights, crowd, opponent and start time; the score once it starts |
+| Victory fireworks | the day after a Philly win, in the team's colours |
+| Holiday fireworks | July 4 and New Year's Eve, after dark |
 | Grand opening | the day a new repo appears |
 | Lighthouse flash | the day of a release |
 | Anniversary | GitHub account anniversary |
