@@ -87,8 +87,16 @@ The town's station master waves the train off and back in.
 - **Time:** Philly time picks dawn, day, golden hour, dusk or night, from real sunrise and sunset.
 - **Weather:** real weather from Open-Meteo, with real sunrise and sunset: an overcast tint,
   rain, storms with lightning, snow and fog. If the feed is down the sky is drawn clear.
-- **Seasons:** blossoms, summer fireflies, autumn leaves, snow.
-- **Holidays:** fireworks on July 4 and New Year's Eve, lights in December.
+- **Seasons:** trees, crops and flowers change colour; spring petals drift across the sky,
+  butterflies come out on summer days, autumn leaves tumble down, and in winter every
+  island gets a snow cap and icicles and snowmen stand in the town and on the Server Farm.
+- **Holidays:** each lasts as long as it is celebrated, from Pi Day's one day to a month
+  of December lights, and decorates the whole map: the town street, the ride's station
+  platforms, the Server Farm and the sky. Christmas week puts the dragon in a Santa hat
+  and swaps the starfighters for a reindeer sleigh; Lunar New Year turns it into a golden
+  dragon chasing a flaming pearl, under red lanterns. Halloween, Thanksgiving, Hanukkah,
+  Valentine's, St. Patrick's, Easter, July 4 and New Year each have their own; the full
+  list is in `sky_islands/holidays.py`.
 
 ## Events
 

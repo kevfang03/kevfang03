@@ -266,11 +266,13 @@ def dragon_window() -> tuple[float, float]:
     return mid - DRAGON_CROSSING / 2, mid + DRAGON_CROSSING / 2
 
 
-def dragon_flight(L: Layer, c: Ctx, shiny: bool = False) -> None:
+def dragon_flight(L: Layer, c: Ctx, shiny: bool = False, skin: str | None = None) -> None:
     """The sky dragon: a long emerald serpent with gold bands, fins and whiskers, weaving
     across the sky. Its body is a chain of segments that follow the head along one path.
-    The rare golden one flies whatever the streak."""
-    if c.w.stats.streak_days < DRAGON_STREAK and not shiny:
+    The rare golden one, and the holiday ones, fly whatever the streak: in Christmas week
+    it wears a Santa hat, and for Lunar New Year it becomes a golden dragon with a red mane,
+    chasing a flaming pearl."""
+    if c.w.stats.streak_days < DRAGON_STREAK and not shiny and not skin:
         return
     path = ("M-200 170C-60 90 60 240 200 150S420 70 560 160S800 250 960 140"
             "S1140 90 1260 150")
@@ -279,6 +281,9 @@ def dragon_flight(L: Layer, c: Ctx, shiny: bool = False) -> None:
         body, belly, fin = "#279a62", "#a8d8a0", "#1a6a44"
     if shiny:
         body, belly, gold, fin = "#f2c046", "#fff3c4", "#ffffff", "#c8902a"
+    lunar = skin == "lunar"
+    if lunar:
+        body, belly, gold, fin = "#f2b632", "#fff0b8", "#d8342a", "#d8342a"
     n, lag = 24, 0.11
     parts = []
     for k in range(n, 0, -1):
@@ -289,9 +294,13 @@ def dragon_flight(L: Layer, c: Ctx, shiny: bool = False) -> None:
         if k % 3 == 0:
             seg += (f'<path d="M0 {-r:.1f}V{r * 0.2:.1f}" stroke="{gold}" stroke-width="1.4" '
                     'opacity=".9"/>')
-        if k % 2 == 0:
-            seg += (f'<path d="M-3 {-r + 0.5:.1f}L1 {-r - 5:.1f}L3 {-r + 0.5:.1f}Z" '
+        if k % 2 == 0 or lunar:  # the lunar dragon's mane runs the whole length
+            tall = 7 if lunar else 5
+            seg += (f'<path d="M-3 {-r + 0.5:.1f}L1 {-r - tall:.1f}L3 {-r + 0.5:.1f}Z" '
                     f'fill="{fin}"/>')
+        if lunar and k % 4 == 2:  # small red legs with gold claws
+            seg += (f'<path d="M0 {r * 0.6:.1f}l-3 6l3 -1l1 2" stroke="{fin}" '
+                    'stroke-width="1.6" fill="none" stroke-linecap="round"/>')
         if k == n:
             seg += (f'<path d="M-2 0L-14 -7L-10 0L-14 7Z" fill="{fin}"/>'
                     f'<path d="M-6 0L-14 -7" stroke="{gold}" stroke-width=".8"/>')
@@ -307,22 +316,40 @@ def dragon_flight(L: Layer, c: Ctx, shiny: bool = False) -> None:
             'fill="none"/>'
             '<circle cx="9" cy="-2.6" r="1.8" fill="#fff3a0"/>'
             '<circle cx="9.4" cy="-2.6" r=".8" fill="#1a1622"/>')
-    if c.dark or shiny:
+    if lunar:  # a flowing red mane behind the head and long gold whiskers
+        head = ('<path d="M-4 -5Q-14 -16 -22 -8Q-16 -10 -12 -4Q-20 -2 -24 6Q-14 2 -6 3Z" '
+                f'fill="{fin}"/>' + head
+                + '<path d="M19 1Q30 8 26 18M18 -2Q30 -10 34 -2" stroke="#ffd27a" '
+                'stroke-width="1" fill="none"/>')
+    if skin == "christmas":  # a Santa hat, flopping back off the head
+        head += ('<path d="M-3 -6Q2 -18 -12 -20Q-4 -14 -8 -7Z" fill="#d8342a"/>'
+                 '<path d="M-5 -6.5Q4 -9 10 -6" stroke="#ffffff" stroke-width="3" fill="none" '
+                 'stroke-linecap="round"/><circle cx="-12.5" cy="-20" r="2.6" fill="#ffffff"/>')
+    if c.dark or shiny or lunar:
         head = '<circle cx="9" cy="-2.6" r="8" fill="#fff3a0" opacity=".25"/>' + head
     # Each segment trails the head by `lag` seconds. Begin times are negative so every
     # segment is already on its (off-screen) path when the image loads.
     timing = _timing(dragon_window())
     out = []
-    for k, seg in [*parts, (0, head)]:
+    lead = []
+    if lunar:  # the flaming pearl the dragon chases, a little ahead of it
+        pearl = ('<circle r="9" fill="#ffd27a" opacity=".3"/><circle r="4.5" fill="#fff6dc"/>'
+                 '<path d="M-4 -3Q-12 -8 -16 0Q-12 8 -4 3" fill="#ff6a3a" opacity=".8"/>')
+        lead = [(-4, pearl)]
+    for k, seg in [*parts, (0, head), *lead]:
         out.append(f'<g>{seg}<animateMotion {timing} begin="{(k - n) * lag:.2f}s" '
                    f'rotate="auto" path="{path}"/></g>')
     L.raw("".join(out))
 
 
-def squadron(L: Layer, c: Ctx) -> None:
-    """Three starfighters crossing the sky in formation, engines glowing."""
+def squadron(L: Layer, c: Ctx, sleigh: str | None = None) -> None:
+    """Three starfighters crossing the sky in formation, engines glowing. In Christmas week
+    a reindeer sleigh (`sleigh`, its drawing) flies the route instead."""
     path = "M-120 120C200 90 500 70 1150 40"
     timing = _timing(SQUADRON_WINDOW)
+    if sleigh:
+        L.raw(f'<g>{sleigh}<animateMotion {timing} begin="-1s" path="{path}"/></g>')
+        return
     for k, (dx, dy, lag) in enumerate(((0, 0, 0.0), (-34, 14, 0.25), (-34, -16, 0.4))):
         ship = starfighter(c, 1.3 - k * 0.15)
         L.raw(f'<g><g transform="translate({dx} {dy})">{ship}</g>'

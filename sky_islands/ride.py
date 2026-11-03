@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import itertools
 
-from . import creatures
+from . import creatures, holidays
 from . import palette as pal
 from .clock import season
 from .context import Ctx, H, W, sign
@@ -61,14 +61,19 @@ SIDES = (  # (centre x, label) for the signs that name each side as it comes int
 # ---------------------------------------------------------------- the wild side
 
 def _pine(L: Layer, x: float, base: float, h: float, col: str, snow: bool) -> None:
+    """A pine of three tiers. Each tier set is one path (and the snow on it another), since
+    the wild side draws dozens of these."""
     L.rect(x - 1, base - h * 0.25, 2, h * 0.25, "#3a2a20")
+    tiers, caps = [], []
     for k in range(3):
         w = h * (0.42 - k * 0.1)
         y = base - h * (0.2 + k * 0.25)
-        L.poly([(x - w, y), (x, y - h * 0.38), (x + w, y)], col)
-        if snow:
-            L.poly([(x - w * 0.3, y - h * 0.26), (x, y - h * 0.38), (x + w * 0.3, y - h * 0.26)],
-                   "#eef2f8")
+        tiers.append(f"M{x - w:.1f} {y:.1f}L{x:.1f} {y - h * 0.38:.1f}L{x + w:.1f} {y:.1f}Z")
+        caps.append(f"M{x - w * 0.3:.1f} {y - h * 0.26:.1f}L{x:.1f} {y - h * 0.38:.1f}"
+                    f"L{x + w * 0.3:.1f} {y - h * 0.26:.1f}Z")
+    L.path("".join(tiers), col)
+    if snow:
+        L.path("".join(caps), "#eef2f8")
 
 
 def _wild_rock(c: Ctx) -> tuple[str, str]:
@@ -158,6 +163,7 @@ def wild_side(L: Layer, c: Ctx) -> None:
            stroke=moss, stroke_width=2)
     if c.dark:
         c.glow(L, ax + 24, base - 30, 30, "#9fe6ff", 0.5, class_="pulse")
+    holidays.wild(L, c, ax + 24, base - 92)
     for k in range(5):
         mx = ax - 20 + k * 9
         cap = "#7fe3ff" if k % 2 else "#c58bff"
@@ -240,12 +246,15 @@ def backdrop(L: Layer, c: Ctx) -> None:
                              (x + 190, 384, 0.8), (x + 40, 395, 1.0)))
     # West side: the sun going down over far mountains.
     x = at(3)
-    L.rect(x - 520, 0, 1100, H, c.defs.linear("westsky", [(0, "#ff9a60", 0), (0.3, "#ff9a60", 0.35),
-                                                          (1, "#ff7a50", 0.45)], x2=1, y2=0))
+    # The sunset tint fades out at both ends, so no edge of it ever crosses the frame as a
+    # line in the sky; the mountains taper down into the clouds for the same reason.
+    L.rect(x - 520, 0, 1300, H, c.defs.linear("westsky", [
+        (0, "#ff9a60", 0), (0.25, "#ff9a60", 0.35), (0.7, "#ff7a50", 0.45), (1, "#ff7a50", 0)],
+        x2=1, y2=0))
     c.glow(L, x + 140, 330, 260, "#ffcf7a", 0.75)
     L.circle(x + 140, 330, 34, "#ffe6b0")
-    L.poly([(x - 500, 400), (x - 380, 300), (x - 260, 360), (x - 120, 280), (x + 20, 350), (x + 160, 290),
-            (x + 320, 360), (x + 560, 320), (x + 560, 420), (x - 500, 420)],
+    L.poly([(x - 640, 420), (x - 500, 400), (x - 380, 300), (x - 260, 360), (x - 120, 280),
+            (x + 20, 350), (x + 160, 290), (x + 320, 360), (x + 560, 330), (x + 720, 420)],
            c.haze(c.P["rock"][0], 0.55), opacity=0.8)
     # A cargo airship heading home into the sunset.
     L.raw(f'<g transform="translate({x - 150:.0f} 150) scale(.8)"><g class="drift">'
@@ -322,6 +331,7 @@ def track(L: Layer, c: Ctx) -> None:
                 g.path(f"M{x} {y + 1}V{y - 24}h{3 if x < x1 - 10 else -3}",
                        stroke=c.lit("#3a3050"), stroke_width=1.2)
             lamps = [(x0 + 7, y - 23), (x1 - 7, y - 23)]
+            holidays.platform(g, c, x0 + 4, x1 - 4, y - 24, y + 1)
         for lx, ly in lamps:
             if offset:
                 g.rect(lx - 1.6, ly - 1, 3.2, 3, pal.WINDOW if c.P["lamps"] else c.lit("#c9b48a"))

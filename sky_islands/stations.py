@@ -48,14 +48,13 @@ def _centre(s: Stop) -> float:
 def _burst(col: str) -> str:
     """One firework, centred on 0,0: rays and sparks around a bright core. An unfilled ring
     keeps its box centred, so it grows from the middle."""
-    rays = "".join(
-        f'<path d="M{10 * dx:.1f} {10 * dy:.1f}L{32 * dx:.1f} {32 * dy:.1f}"/>'
-        for dx, dy in _spokes(16))
-    sparks = "".join(f'<circle cx="{37 * dx:.1f}" cy="{37 * dy:.1f}" r="2"/>'
-                     for dx, dy in _spokes(16, 0.5))
+    rays = "".join(f"M{10 * dx:.1f} {10 * dy:.1f}L{32 * dx:.1f} {32 * dy:.1f}"
+                   for dx, dy in _spokes(16))
+    sparks = "".join(f"M{37 * dx:.1f} {37 * dy:.1f}h0" for dx, dy in _spokes(16, 0.5))
     return (f'<circle r="39" fill="none"/>'
-            f'<g stroke="{col}" stroke-width="2" stroke-linecap="round">{rays}</g>'
-            f'<g fill="{col}">{sparks}</g><circle r="4.5" fill="#fff6dc"/>')
+            f'<path d="{rays}" stroke="{col}" stroke-width="2" stroke-linecap="round"/>'
+            f'<path d="{sparks}" stroke="{col}" stroke-width="4" stroke-linecap="round"/>'
+            f'<circle r="4.5" fill="#fff6dc"/>')
 
 
 def _spokes(n: int, turn: float = 0.0) -> list[tuple[float, float]]:

@@ -7,6 +7,7 @@ import math
 from dataclasses import dataclass
 
 from . import palette as pal
+from . import seasons
 from .context import Ctx
 from .svg import Layer
 
@@ -167,6 +168,7 @@ def draw(L: Layer, c: Ctx, s: Shape, gid: str, haze: float = 0.0, detail: bool =
     grass = c.haze(c.P["grass"], haze)
     lip = "L".join(f"{x:.1f} {y + 14:.1f}" for x, y in reversed(ridge))
     L.path(top_path + "L" + lip + "Z", grass)
+    seasons.snow_cap(L, c, ridge, haze)
     moss = c.haze(pal.shade(c.P["grass"], 0.8), haze)
     for x, y in ridge[2:-2:2]:
         L.ellipse(x + c.rng.uniform(-6, 6), y + 14, c.rng.uniform(6, 12), c.rng.uniform(2, 5), moss)

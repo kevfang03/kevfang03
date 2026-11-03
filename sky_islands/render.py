@@ -10,10 +10,12 @@ from . import (
     companion,
     creatures,
     events,
+    holidays,
     hud,
     island,
     rail,
     ride,
+    seasons,
     sky,
     stations,
     town,
@@ -93,6 +95,7 @@ def _home(c: Ctx, home: island.Shape) -> Layer:
     island.crystals(g, c, home)
     labels = town.draw(g, c, home)
     fireflies(g, c, home)
+    seasons.butterflies(g, c, home)
     hud.labels(g, labels)
     return g
 
@@ -115,6 +118,8 @@ def render(w: World) -> str:
     sky.sun_or_moon(L, c, ev.big_moon)
     if ev.comet:
         events.comet(L, c)
+    hs = holidays.keys(c)
+    holidays.sky(L, c, hs)
     labels: list = []
     # The overview: the whole archipelago, as the loop opens and closes.
     far = Layer()
@@ -126,9 +131,11 @@ def render(w: World) -> str:
     if ev.fireworks:
         events.fireworks(far, c, ev.fireworks)
     creatures.jellies(far, c)
+    holidays.far(far, c, hs)
     near = Layer()
     world.flying_cars(near, c)
     near.group(_with_labels(c, world.philly), id="isl-philly")
+    holidays.near(near, c, hs)
     near.group(_with_labels(c, world.stadium), id="isl-stadium")
     near.group(_home(c, home), id="isl-home")
     world.rope_bridge(near, c, island.PHILLY, home)
@@ -160,9 +167,13 @@ def render(w: World) -> str:
     trip.add(drone)
     L.group(trip, class_="ride")
     # Things that cross the whole sky, whatever the camera is doing.
-    wonders.squadron(L, c)
-    wonders.dragon_flight(L, c, ev.shiny)
+    wonders.squadron(L, c, holidays.sleigh(c) if "christmas" in hs else None)
+    skin = "lunar" if "lunar" in hs else "christmas" if "christmas" in hs else None
+    wonders.dragon_flight(L, c, ev.shiny, skin)
+    holidays.flyers(L, c, hs)
+    holidays.night_tint(L, c)
     weather.overlay(L, c)
+    seasons.overlay(L, c)
     L.rect(0, 0, W, H, defs.radial("vignette", [(0.55, "#000000", 0), (1, "#000000", 0.38)],
                                    r=0.75))
     L.rect(0, 0, W, H, "#05040f", class_="fade")
@@ -188,7 +199,7 @@ def render(w: World) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'role="img" aria-labelledby="title desc">'
         f'<title id="title">{escape(title)}</title><desc id="desc">{escape(desc)}</desc>'
-        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}{hud.MOBILE_CSS}"
+        f"<style>{CSS}{creatures.css()}{camera.css(marker_span)}{station_css}{delivery_css}{weather.CSS}{events.CSS}{seasons.CSS}{holidays.CSS}{hud.MOBILE_CSS}"
         f"</style>{defs.svg()}"
         f'<g clip-path="{card}">{L.svg()}</g></svg>'
     )

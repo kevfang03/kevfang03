@@ -9,6 +9,7 @@ old wheat patch there is a help desk kiosk with someone in a headset taking ques
 
 from __future__ import annotations
 
+from . import holidays
 from . import palette as pal
 from .context import Ctx
 from .island import Shape, draw, waterfall
@@ -257,6 +258,7 @@ def server_farm(L: Layer, c: Ctx, s: Shape) -> None:
     racks = rack_count(c.w.stats.contributions_year)
     steps = _terraces(L, c, s, racks)
     _wheat(L, c, s, s.x0 + 30, s.x0 + 92)
+    holidays.farm(L, c, s, s.x0 + 30, s.x0 + 92)
     _help_desk(L, c, s.x0 + 136, s.ground(s.x0 + 136) + 3)
     bx = s.x0 + 168
     _barn(L, c, bx, s.ground(bx + 30) + 3)

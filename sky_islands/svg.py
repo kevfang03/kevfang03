@@ -145,6 +145,14 @@ class Defs:
                               f'patternUnits="userSpaceOnUse">{body}</pattern>')
         return f"url(#{id_})"
 
+    def shape(self, id_: str, body: str) -> str:
+        """A drawing kept once and placed many times with <use href=...>, so repeated
+        decorations cost a few dozen bytes each."""
+        if id_ not in self.ids:
+            self.ids.add(id_)
+            self.items.append(f'<g id="{id_}">{body}</g>')
+        return f"#{id_}"
+
     def clip(self, id_: str, shape: str) -> str:
         if id_ not in self.ids:
             self.ids.add(id_)

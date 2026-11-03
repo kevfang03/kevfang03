@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from . import holidays
 from . import palette as pal
 from .clock import season
 from .companion import companion
@@ -433,9 +434,9 @@ def tree(L: Layer, c: Ctx, x: float, base: float, h: float) -> None:
     trunk = c.lit("#5a3f2e")
     L.rect(x - 1.5, base - h * 0.45, 3, h * 0.45, trunk)
     cols = TREES[season(c.w.when.month)]
-    if not cols:
-        for dx in (-5, -2, 3, 6):
-            L.line(x, base - h * 0.4, x + dx, base - h * 0.75 + abs(dx), trunk, 1)
+    if not cols:  # bare winter branches, as one path
+        L.path("".join(f"M{x:.1f} {base - h * 0.4:.1f}L{x + dx:.1f} {base - h * 0.75 + abs(dx):.1f}"
+                       for dx in (-5, -2, 3, 6)), stroke=trunk, stroke_width=1)
         return
     for dx, dy, r in ((0, -0.68, 0.3), (-0.18, -0.52, 0.22), (0.18, -0.52, 0.22)):
         L.circle(x + dx * h, base + dy * h, r * h, c.lit(c.rng.choice(cols)))
@@ -598,6 +599,7 @@ def draw(L: Layer, c: Ctx, s: Shape) -> list[Label]:
         else:
             building(L, c, p, base, quest, labels)
     lanterns(L, c, s, town.span)
+    holidays.town(L, c, s, town.span)
     villagers(L, c, s, town.span)
     verge(L, c, s)
     if town.overflow:

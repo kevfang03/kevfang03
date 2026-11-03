@@ -8,8 +8,8 @@ image is repeatable and a visitor who comes back later may catch something new:
 - a comet on clear evenings (about 1 in 30)
 
 Others follow the calendar: meteor showers on their peak nights, a big moon when it is
-full, fireworks on July 4 and New Year's Eve, and victory fireworks in team colours the day
-after a Philadelphia win. The header names whatever is happening.
+full, the holidays in holidays.py, and victory fireworks in team colours the day after a
+Philadelphia win. The header names whatever is happening.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
+from . import holidays
 from . import palette as pal
 from .context import Ctx, W
 from .model import World
@@ -25,8 +26,6 @@ from .svg import Layer
 SHINY_ODDS, AURORA_ODDS, COMET_ODDS = 200, 12, 30
 SHOWERS = {(8, 11): "PERSEIDS", (8, 12): "PERSEIDS", (8, 13): "PERSEIDS",
            (12, 13): "GEMINIDS", (12, 14): "GEMINIDS", (12, 15): "GEMINIDS"}
-HOLIDAYS = {(7, 4): ("FOURTH OF JULY", ("#ff4a55", "#ffffff", "#3a7bff")),
-            (12, 31): ("NEW YEAR'S EVE", ("#ffd27a", "#ffffff", "#ff6ab4"))}
 FULL_MOON = 0.034  # within about a day of full
 
 
@@ -38,7 +37,8 @@ class Events:
     meteors: str | None = None
     big_moon: bool = False
     fireworks: tuple[str, ...] = ()  # colours, when there are any
-    reason: str | None = None  # why there are fireworks
+    reason: str | None = None  # why there are victory fireworks
+    holiday: str | None = None  # the header line for today's holiday
 
     def headline(self) -> str | None:
         """One line for the header, the rarest first."""
@@ -48,10 +48,12 @@ class Events:
             return "RARE SIGHTING · AN AURORA OVER THE ISLANDS"
         if self.comet:
             return "RARE SIGHTING · A COMET OVER PHILLY"
-        if self.meteors:
-            return f"TONIGHT · THE {self.meteors} METEOR SHOWER"
+        if self.holiday:
+            return self.holiday
         if self.reason:
             return self.reason
+        if self.meteors:
+            return f"TONIGHT · THE {self.meteors} METEOR SHOWER"
         if self.big_moon:
             return "TONIGHT · A FULL MOON"
         return None
@@ -70,8 +72,8 @@ def roll(w: World) -> Events:
         team = pal.TEAMS[w.wins[0]]
         fireworks = (team["light"], team["secondary"], "#ffffff")
         reason = f"{team['label']} WON LAST NIGHT · VICTORY FIREWORKS"
-    if key in HOLIDAYS and w.phase in ("dusk", "night"):
-        reason, fireworks = HOLIDAYS[key][0] + " FIREWORKS", HOLIDAYS[key][1]
+    today = holidays.on(w.when.date())
+    fireworks = holidays.fireworks(w.when.date(), w.phase) or fireworks
     return Events(
         shiny=shiny,
         aurora=night and clear and w.when.month in (12, 1, 2) and aurora_roll < 1 / AURORA_ODDS,
@@ -81,6 +83,8 @@ def roll(w: World) -> Events:
         big_moon=night and abs(w.moon - 0.5) < FULL_MOON,
         fireworks=fireworks,
         reason=reason,
+        holiday=(today[0].headline + (" · FIREWORKS" if fireworks and not w.wins else ""))
+        if today else None,
     )
 
 
