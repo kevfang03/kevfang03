@@ -137,6 +137,9 @@ def _fan_mill(L: Layer, c: Ctx, x: float, base: float) -> None:
     cy = base - 54
     L.circle(x, cy, 13, c.lit("#3a4058"), opacity=0.35)
     blades = Layer()
+    # The spin turns the blades about the centre of their bounding box. Three blades are
+    # lopsided, so an unfilled ring around the hub makes that centre the hub itself.
+    blades.circle(x, cy, 12.5, "none")
     for a in (0, 120, 240):
         blades.path(f"M{x} {cy}q4 -6 1 -12q-4 4 -1 12z", c.lit("#dfe3ec"),
                     transform=f"rotate({a} {x} {cy})")

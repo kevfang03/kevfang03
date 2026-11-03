@@ -43,6 +43,13 @@ def starfighter(c: Ctx, scale: float = 1.0, left: bool = False, haze: float = 0.
             '<circle cx="-14.4" cy="0" r="1.4" fill="#bff4ff"/></g>')
 
 
+def _foot(x: float, w: float) -> float:
+    """How far the island's domed top has dropped below the flat build line at design x, so
+    things near the edge can reach down to the ground instead of standing on air. Matches
+    `Shape.ground`: 14 px at the edge, in design units."""
+    return 14 * (x / (DESIGN_W / 2)) ** 4 * DESIGN_W / w
+
+
 def _frame(L: Layer, cx: float, top: float, w: float, body: Layer) -> None:
     L.group(body, transform=f"translate({cx:.1f} {top:.1f}) scale({w / DESIGN_W:.3f})")
 
@@ -59,19 +66,27 @@ def starport(L: Layer, c: Ctx, cx: float, top: float, w: float, ships: int,
     lamps = c.P["lamps"]
     g = Layer()
     steel, dark = tone("#8a90a8"), tone("#3a3f56")
-    # Control tower with a radar dish and a red beacon.
-    g.rect(-62, -58, 8, 58, tone("#c9cede"))
+
+    def foot(x: float) -> float:
+        return _foot(x, w)
+
+    # Control tower on a concrete footing, with a turning radar and a red beacon on its cab.
+    base = foot(-62)
+    g.rect(-62, -58, 8, 58 + base, tone("#c9cede"))
+    g.rect(-55.5, -58, 1.5, 58 + base, "#000000", opacity=0.15)
+    g.rect(-65, base - 2.5, 14, 3, tone("#8a8490"), rx=1)
     g.rect(-66, -66, 16, 9, tone("#5a6480"), rx=2)
     g.rect(-64, -63.5, 12, 3.5, "#7fe3ff" if lamps else tone("#bfe4f8"))
-    g.line(-58, -66, -58, -76, dark, 1)
-    g.circle(-58, -77, 1.4, "#ff5a4a", class_="av")
-    dish = Layer()
-    dish.path("M-51 -72a7 4 0 0 1 12 -4z", tone("#e6eaf2"))
-    dish.line(-45, -74, -48, -70, dark, 0.8)
-    g.group(dish, class_="sway")
+    g.line(-62, -66, -62, -75, dark, 1)
+    g.circle(-62, -76, 1.4, "#ff5a4a", class_="av")
+    g.line(-55, -66, -55, -71, dark, 1.2)
+    radar = Layer()
+    radar.rect(-61, -73.5, 12, 2.4, tone("#e6eaf2"), rx=1.2)
+    radar.rect(-61, -73.5, 12, 1, "#ffffff", opacity=0.5, rx=0.5)
+    g.group(radar, class_="radar")
     # Fuel tanks.
     for x in (-44, -35):
-        g.rect(x, -16, 8, 16, tone("#e8e4dc"), rx=4)
+        g.rect(x, -16, 8, 16 + foot(x), tone("#e8e4dc"), rx=4)
         g.rect(x, -10, 8, 2, tone("#ff8a3a"))
     # Hangar: a ribbed half-cylinder with its door open.
     g.path("M-26 0V-14A22 18 0 0 1 18 -14V0Z", tone("#a8b0c4"))
@@ -84,7 +99,7 @@ def starport(L: Layer, c: Ctx, cx: float, top: float, w: float, ships: int,
     g.raw(f'<g transform="translate(2 -5)">{starfighter(c, 0.55, haze=haze)}</g>')
     # The landing pad, raised on pylons, with lights round its edge.
     g.rect(24, -12, 46, 3, steel)
-    g.path("M30 -9L34 0M64 -9L60 0", stroke=dark, stroke_width=1.6)
+    g.path(f"M30 -9L34 {foot(34):.1f}M64 -9L60 {foot(60):.1f}", stroke=dark, stroke_width=1.6)
     g.ellipse(47, -12.5, 14, 2, "none", stroke=tone("#f2c230"), stroke_width=0.8,
               stroke_dasharray="2 2")
     for k, x in enumerate(range(26, 70, 7)):
@@ -93,27 +108,28 @@ def starport(L: Layer, c: Ctx, cx: float, top: float, w: float, ships: int,
     for k in range(min(ships, 3)):
         g.raw(f'<g transform="translate({-40 + k * 26} 4)">{starfighter(c, 0.5, k % 2 == 1, haze)}'
               "</g>")
-    # Cargo crates, an antenna array, a holo sign over the pad, a shuttle, a fuel hose and a
-    # pilot in an orange flight suit.
+    # Cargo crates, antennas on the hangar roof, a holo sign over the pad, a shuttle parked in
+    # front and a pilot in an orange flight suit.
     for k, (x, y, col) in enumerate(((-30, -5, "#e8873a"), (-24, -5, "#8a90a8"),
                                      (-27, -10, "#e8b440"))):
         g.rect(x, y, 6, 5, tone(col))
         g.path(f"M{x} {y}l6 5M{x + 6} {y}l-6 5", stroke=dark, stroke_width=0.4, opacity=0.6)
-    for k, x in enumerate((-74, -70, -66)):
-        g.line(x, 0, x, -30 - k * 8, dark, 0.8)
-        g.line(x - 2, -24 - k * 8, x + 2, -24 - k * 8, dark, 0.6)
+    for x, h in ((-14, 12), (-9, 8)):
+        roof = -14 - 18 * math.sqrt(1 - ((x + 4) / 22) ** 2)
+        g.line(x, roof + 1, x, roof - h, dark, 0.8)
+        g.line(x - 2, roof - h * 0.7, x + 2, roof - h * 0.7, dark, 0.6)
+    g.circle(-14, -14 - 18 * math.sqrt(1 - (10 / 22) ** 2) - 12.6, 0.9, "#ff5a4a", class_="av")
     g.line(36, -12, 36, -32, dark, 0.8)
     g.rect(28, -42, 18, 10, "#7fe3ff", opacity=0.25 if lamps else 0.18, rx=1)
     g.rect(28, -42, 18, 10, "none", stroke="#7fe3ff", stroke_width=0.6, opacity=0.8)
     g.path("M31 -37l3 -2.5l3 2.5M37 -37l3 -2.5l3 2.5", stroke="#bff4ff", stroke_width=0.7,
            class_="pulse")
     shuttle, belly = tone("#e8e4dc"), tone("#9aa3b8")
-    g.path("M54 -1Q54 -10 64 -10H70Q76 -10 76 -4V-1Z", shuttle)
-    g.path("M54 -1Q54 -4 60 -4H76V-1Z", belly)
-    g.rect(66, -8.5, 6, 3, "#7fd8ff")
-    g.rect(52, -7, 3, 5, dark)
-    g.circle(52, -4.5, 1.2, "#7fe3ff", class_="flick")
-    g.path("M-36 -2Q-6 6 30 -9", stroke=tone("#3a3f56"), stroke_width=0.9)
+    g.path("M30 4Q30 -5 40 -5H46Q52 -5 52 1V4Z", shuttle)
+    g.path("M30 4Q30 1 36 1H52V4Z", belly)
+    g.rect(42, -3.5, 6, 3, "#7fd8ff")
+    g.rect(28, -2, 3, 5, dark)
+    g.circle(28, 0.5, 1.2, "#7fe3ff", class_="flick")
     g.circle(20, -6, 1.6, tone("#f2c9a8"))
     g.rect(18.6, -4.4, 2.8, 4.4, tone("#ff8a3a"), rx=0.8)
     g.path("M18.4 -6.4a1.8 1.8 0 0 1 3.2 -0.6", stroke="#ffffff", stroke_width=0.7)
@@ -128,9 +144,9 @@ def starport(L: Layer, c: Ctx, cx: float, top: float, w: float, ships: int,
 PETALS = ("#ffb7d0", "#ffc9dc", "#f49ac0", "#ffe0ea")
 
 
-def _sakura(g: Layer, c: Ctx, x: float, h: float, tone, haze: float) -> None:
+def _sakura(g: Layer, c: Ctx, x: float, h: float, tone, haze: float, foot: float = 0) -> None:
     trunk = tone("#4a2e2a")
-    g.path(f"M{x} 0q-2 {-h * 0.4:.0f} 2 {-h * 0.7:.0f}M{x + 1} {-h * 0.45:.0f}"
+    g.path(f"M{x} {foot:.1f}V0q-2 {-h * 0.4:.0f} 2 {-h * 0.7:.0f}M{x + 1} {-h * 0.45:.0f}"
            f"q6 -4 10 -10M{x + 1} {-h * 0.55:.0f}q-6 -3 -9 -9", stroke=trunk, stroke_width=1.6,
            stroke_linecap="round")
     for _ in range(9):
@@ -150,7 +166,7 @@ def shrine(L: Layer, c: Ctx, cx: float, top: float, w: float, haze: float = 0.0)
 
     lamps = c.P["lamps"]
     g = Layer()
-    _sakura(g, c, -58, 46, tone, haze)
+    _sakura(g, c, -55, 46, tone, haze, _foot(-55, w))
     # Bamboo behind the hall.
     for k, x in enumerate((36, 40, 44, 47)):
         stalk = tone("#5aa05a" if k % 2 else "#4a8a4a")
@@ -165,9 +181,15 @@ def shrine(L: Layer, c: Ctx, cx: float, top: float, w: float, haze: float = 0.0)
         g.rect(x, -24, 2.4, 24, wood)
     g.rect(4, -24, 40, 2.4, wood)
     g.rect(19, -14, 10, 14, "#ffcf7a" if lamps else tone("#5a3a2a"))
-    g.path("M-4 -24Q8 -26 12 -36H36Q40 -26 52 -24Q42 -30 38 -38H10Q6 -30 -4 -24Z", roof)
-    g.path("M-4 -24Q8 -26 12 -36", stroke=c.P["rim"], stroke_width=0.8, opacity=0.7)
-    g.rect(22, -42, 4, 6, tone("#e8b440"))
+    # A solid hipped roof with upturned eaves, tile ribs, a ridge cap and gold ridge ends.
+    g.path("M-7 -28Q1 -23 8 -25L15 -37H33L40 -25Q47 -23 55 -28L49 -21.5H-1Z", roof)
+    for x in (12, 18, 24, 30, 36):
+        g.line(x, -36, x + (x - 24) * 0.45, -23, tone("#4e4e66"), 0.7)
+    g.path("M-7 -28Q1 -23 8 -25L15 -37", stroke=c.P["rim"], stroke_width=0.9, opacity=0.7)
+    g.path("M-1 -21.5H49", stroke=tone("#24242f"), stroke_width=1.2)
+    g.rect(13, -39.5, 22, 2.8, tone("#2a2a3a"), rx=1)
+    for x in (12, 34):
+        g.path(f"M{x} -39l1 -3.4l1.6 3.4z", tone("#e8b440"))
     if lamps:
         c.glow(g, 24, -8, 20, "#ffcf7a", 0.6)
     # Steps and the torii gate in front.
@@ -183,9 +205,10 @@ def shrine(L: Layer, c: Ctx, cx: float, top: float, w: float, haze: float = 0.0)
     for x in (-31, -14):
         g.rect(x - 0.5, -3, 4, 3, black)
     # Stone lanterns.
-    for x in (-42, 52):
+    for x in (-42, 50):
         stone = tone("#a8a4b0")
-        g.rect(x - 1.5, -10, 3, 10, stone)
+        g.rect(x - 1.5, -10, 3, 10 + _foot(x, w), stone)
+        g.rect(x - 3.5, _foot(x, w) - 2, 7, 2, tone("#8a8490"))
         g.rect(x - 4, -16, 8, 6, stone)
         g.path(f"M{x - 6} -16l6 -4l6 4z", stone)
         g.rect(x - 2, -15, 4, 3.6, "#ffcf7a" if lamps else tone("#5a5560"))
@@ -210,14 +233,14 @@ def shrine(L: Layer, c: Ctx, cx: float, top: float, w: float, haze: float = 0.0)
         g.ellipse(x, 0.6, 1.8, 0.7, tone("#ff8a3a" if k != 1 else "#ffffff"))
     g.ellipse(21, 0.4, 2.2, 0.8, tone("#5cbf6a"))
     # A bronze bell at the door, and a rack of wooden prayer plaques.
-    g.line(24, -24, 24, -19, tone("#d9c08a"), 0.6)
+    g.line(24, -21.5, 24, -19, tone("#d9c08a"), 0.6)
     g.path("M22 -19q2 -3 4 0v2h-4z", tone("#c9973a"))
     for k in range(3):
         g.rect(-2 + k * 3.4, -11, 3, 2.4, tone("#d9b47a"))
     g.line(-3, -8.4, 8, -8.4, tone("#5a3a2a"), 0.8)
     g.line(-2, -8.4, -2, 0, tone("#5a3a2a"), 0.6)
     g.line(7.4, -8.4, 7.4, 0, tone("#5a3a2a"), 0.6)
-    _sakura(g, c, 62, 40, tone, haze)
+    _sakura(g, c, 58, 40, tone, haze, _foot(58, w))
     _frame(L, cx, top, w, g)
 
 

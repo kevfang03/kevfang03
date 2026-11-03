@@ -362,23 +362,28 @@ EXTRAS = {
 def _roots(L: Layer, c: Ctx, s: Shape, haze: float) -> None:
     root = c.haze(pal.mix(c.P["rock"][1], "#3a2a1a", 0.4), haze)
     vine = c.haze("#2f5a4a" if not c.dark else "#24463e", haze)
+    # Roots and vines scale with the island, so small islands don't trail long cables.
+    k = min(1.0, s.w / 300)
     for _ in range(int(s.w / 26)):
         x = c.rng.uniform(s.x0 + s.w * 0.15, s.x1 - s.w * 0.15)
         y = s.ground(x) + 14
-        ln = c.rng.uniform(30, 90)
-        bend = c.rng.uniform(-10, 10)
+        ln = c.rng.uniform(30, 90) * k
+        bend = c.rng.uniform(-10, 10) * k
         L.path(f"M{x:.0f} {y:.0f}q{bend:.0f} {ln * 0.5:.0f} {bend * 0.4:.0f} {ln:.0f}",
-               stroke=vine if c.rng.random() < 0.6 else root, stroke_width=c.rng.uniform(1, 2.2),
+               stroke=vine if c.rng.random() < 0.6 else root,
+               stroke_width=c.rng.uniform(1, 2.2) * (0.5 + k / 2),
                stroke_linecap="round", opacity=0.85)
         if c.rng.random() < 0.5:
-            L.circle(x + bend * 0.4, y + ln, 1.6, vine)
+            L.circle(x + bend * 0.4, y + ln, 1.6 * (0.5 + k / 2), vine)
     for side in (-1, 1):
         x = s.cx + side * s.w * 0.36
-        y = s.ground(x) + 22
-        L.path(f"M{x:.0f} {y:.0f}c{side * 18} 20 {side * 4} 50 {side * 22} 80",
-               stroke=root, stroke_width=3, stroke_linecap="round")
-        L.path(f"M{x + side * 8:.0f} {y + 30:.0f}q{side * 10} 10 {side * 6} 30",
-               stroke=root, stroke_width=1.4, stroke_linecap="round")
+        y = s.ground(x) + 22 * k
+        L.path(f"M{x:.0f} {y:.0f}c{side * 18 * k:.0f} {20 * k:.0f} {side * 4 * k:.0f} "
+               f"{50 * k:.0f} {side * 22 * k:.0f} {80 * k:.0f}",
+               stroke=root, stroke_width=1 + 2 * k, stroke_linecap="round")
+        L.path(f"M{x + side * 8 * k:.0f} {y + 30 * k:.0f}q{side * 10 * k:.0f} {10 * k:.0f} "
+               f"{side * 6 * k:.0f} {30 * k:.0f}",
+               stroke=root, stroke_width=0.6 + 0.8 * k, stroke_linecap="round")
 
 
 def hanging_lanterns(L: Layer, c: Ctx, s: Shape) -> None:
@@ -477,9 +482,18 @@ def drifting_rocks(L: Layer, c: Ctx, spots: tuple[tuple[float, float, float, boo
     """Small rocks bobbing in the air; some carry a tiny tree."""
     for k, (x, y, r, tree) in enumerate(spots):
         g = Layer()
+        light, dark = c.P["rock"]
         g.path(f"M{x - r} {y}Q{x - r * 0.6} {y + r * 1.4} {x} {y + r * 2}"
-               f"Q{x + r * 0.5} {y + r * 1.2} {x + r} {y}Z", c.P["rock"][1])
-        g.ellipse(x, y, r, r * 0.32, c.P["grass"])
+               f"Q{x + r * 0.5} {y + r * 1.2} {x + r} {y}Z", dark)
+        # A lit facet on the left and a band under the grass, so it reads as rock, not a
+        # dark arrowhead.
+        g.path(f"M{x - r} {y}Q{x - r * 0.6} {y + r * 1.4} {x} {y + r * 2}"
+               f"Q{x - r * 0.15} {y + r * 0.9} {x - r * 0.1} {y}Z", light, opacity=0.55)
+        g.ellipse(x, y + r * 0.25, r * 0.92, r * 0.3, pal.mix(light, dark, 0.4))
+        g.ellipse(x, y, r, r * 0.32, pal.shade(c.P["grass"], 1.1))
+        for dx in (-0.6, -0.1, 0.45):
+            g.path(f"M{x + dx * r:.1f} {y - r * 0.15:.1f}l{r * 0.08:.1f} {-r * 0.35:.1f}"
+                   f"l{r * 0.1:.1f} {r * 0.35:.1f}z", pal.shade(c.P["grass"], 1.25))
         g.path(f"M{x - r} {y}q{r * 0.5} {-r * 0.3} {r * 1.5} {-r * 0.1}", stroke=c.P["rim"],
                stroke_width=0.8, opacity=0.8)
         if tree:
