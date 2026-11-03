@@ -142,7 +142,7 @@ def test_ride_goes_round_the_island_and_starts_on_the_overview():
     assert ".ride{opacity:0;" in css
     assert f"translateX({-ride.PAN}px)" in css
     svg = render(demo_world("dusk"))
-    for side in ("FRONT · THE TOWN", "EAST · STADIUM BRIDGE", "NORTH · THE WILD SIDE",
+    for side in ("FRONT · THE TOWN", "EAST · STADIUM BRIDGE", "NORTH · THE WILDWOOD",
                  "WEST · THE SERVER FARM"):
         assert side in svg
     assert 'href="#isl-home"' in svg and 'id="isl-home"' in svg

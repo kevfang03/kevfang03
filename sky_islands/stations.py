@@ -5,8 +5,7 @@ there:
 
 - **Stadium:** fireworks over the stands, or, while it is still locked, a glint on its
   padlock.
-- **Wild side:** sky jellies drifting up past the forest. Once they open, a starfighter also
-  lifts off the Starport and a gust of petals blows off the Shrine.
+- **Wildwood:** sky jellies drifting up past the forest and its Elder Tree.
 - **Server Farm:** a drone drops a crate into the cargo wagon.
 
 A sign over each platform shows the number that builds that place.
@@ -103,7 +102,7 @@ def _stadium(L: Layer, c: Ctx, s: Stop, css: list[str]) -> None:
     sign(L, x, SIGN_Y, text, GOLD)
 
 
-# ---------------------------------------------------------------- the wild side
+# ---------------------------------------------------------------- the Wildwood
 
 def _wild(L: Layer, c: Ctx, s: Stop, css: list[str]) -> None:
     x = _centre(s)
@@ -116,15 +115,35 @@ def _wild(L: Layer, c: Ctx, s: Stop, css: list[str]) -> None:
                            lead=1.5, tail=1.5))
         L.raw(f'<g transform="translate({x + dx:.0f} {y})"><g class="{name}">'
               f"{creatures.jelly(c, size).svg()}</g></g>")
+    n = c.w.stats.streak_days
+    sign(L, x, SIGN_Y, f"WILDWOOD · STREAK {n} DAY{'' if n == 1 else 'S'}", GOLD)
+
+
+# ---------------------------------------------------------------- passing the wonders
+
+def _passing(L: Layer, c: Ctx, css: list[str]) -> None:
+    """The Starport and the Shrine float between stops, so their moments play as the train
+    passes under them: a starfighter lifts off on the way from the stadium to the Wildwood,
+    and a gust of petals blows off the Shrine on the way on to the Server Farm."""
+    from .ride import NEAR  # imported here: the ride module imports this one while drawing
+
+    stops = {s.key: s for s in schedule()}
+
+    def leg(a: str, b: str) -> Stop:
+        d, r = stops[a].depart, stops[b].arrive
+        return Stop("pass", 0, d + (r - d) * 0.25, d + (r - d) * 0.75)
+
     if level(c) >= UNLOCK["starport"]:
-        # The Starport's parked starfighter waits for the train, then lifts off.
+        s = leg("stadium", "wild")
         parked = "transform:translate(0px,0px);opacity:1"
         gone = "transform:translate(110px,-150px);opacity:0"
         css.append(keyframes("liftoff", [
-            (0, parked), (s.arrive + 0.6, parked + ";animation-timing-function:ease-in"),
-            (s.depart + 0.4, gone), (99.9, gone), (100, parked)]))
+            (0, parked), (s.arrive, parked + ";animation-timing-function:ease-in"),
+            (s.depart, gone), (99.9, gone), (100, parked)]))
         css.append(f".ride .launch{{animation:liftoff {LOOP_S}s linear infinite}}")
     if level(c) >= UNLOCK["shrine"]:
+        s = leg("wild", "farm")
+        _, _, cx, top, w = NEAR[1]
         cols = ("#ffb7d0", "#ffc9dc", "#f49ac0", "#ffe0ea")
         for k in range(9):
             name = f"gust{k}"
@@ -132,12 +151,11 @@ def _wild(L: Layer, c: Ctx, s: Stop, css: list[str]) -> None:
             still = "transform:translate(0px,0px) rotate(0deg)"
             blown = "transform:translate(-150px,60px) rotate(260deg);opacity:0"
             css.append(_moment(name, s, [(0, still + ";opacity:0"), (u, still + ";opacity:1"),
-                                         (u + 0.5, blown), (1, "opacity:0")], tail=0.5,
+                                         (u + 0.5, blown), (1, "opacity:0")],
                                extra=";transform-box:fill-box;transform-origin:center"))
-            px, py = 2700 + (k % 3) * 18 - 10, 92 + (k * 7) % 22
+            px = cx + (-50 if k % 2 else 52) * w / 150 + (k % 3) * 4
+            py = top - 30 + (k * 7) % 16
             L.ellipse(px, py, 2.2, 1.3, cols[k % 4], class_=name)
-    n = c.w.stats.streak_days
-    sign(L, x, SIGN_Y, f"WILD SIDE · STREAK {n} DAY{'' if n == 1 else 'S'}", GOLD)
 
 
 # ---------------------------------------------------------------- the Server Farm
@@ -210,4 +228,5 @@ def draw(L: Layer, c: Ctx) -> str:
             _wild(L, c, s, css)
         else:
             _farm(L, c, s)
+    _passing(L, c, css)
     return "".join(css)

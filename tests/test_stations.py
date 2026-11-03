@@ -53,7 +53,7 @@ def test_locked_stadium_shows_how_far_to_go(low):
     assert 'class="glint"' in low
     assert 'class="fw0"' not in low
     assert ".ride .launch" not in low  # no Starport yet, so nothing lifts off
-    assert "WILD SIDE · STREAK 3 DAYS" in low
+    assert "WILDWOOD · STREAK 3 DAYS" in low
 
 
 def test_open_stations_have_their_moments(high):
