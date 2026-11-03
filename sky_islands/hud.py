@@ -21,7 +21,10 @@ def clock_text(t: datetime) -> str:
 def game_text(g) -> str:
     label = pal.TEAMS[g.team]["label"]
     where = "vs" if g.home else "@"
-    when = f" · {clock_text(g.start)}" if g.start else ""
+    if g.result:
+        when = f" · {g.result}"
+    else:
+        when = f" · {clock_text(g.start)}" if g.start else ""
     return f"{label} {where} {g.opponent}{when}"
 
 

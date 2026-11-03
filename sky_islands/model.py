@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from .clock import PHILLY, approx_sun_times, moon_phase, phase_for
+
+if TYPE_CHECKING:
+    from .forecast import Forecast
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,7 @@ class Game:
     opponent: str
     start: datetime | None = None
     home: bool = True
+    result: str | None = None  # "W 24-17", "L 10-27" or "LIVE 7-3" once it has started
 
 
 @dataclass(frozen=True)
@@ -49,10 +54,11 @@ class World:
 
     when: datetime  # local Philadelphia time
     phase: str  # dawn, day, golden, dusk or night
-    weather: str  # clear, cloudy, rain or snow
+    weather: str  # clear, cloudy, fog, rain, storm or snow
     stats: Stats
     temp_f: int | None = None
     games: tuple[Game, ...] = field(default_factory=tuple)
+    wins: tuple[str, ...] = ()  # Philadelphia teams that won yesterday
     seed: int = 7
 
     @property
@@ -102,9 +108,16 @@ def demo_world(phase: str = "dusk", weather: str = "clear", stats: Stats = DEMO_
     return World(when=when, phase=phase, weather=weather, stats=stats, temp_f=48, games=games)
 
 
-def world_at(stats: Stats, now: datetime) -> World:
-    """The world for real stats at a real moment: the light comes from Philadelphia's
-    approximate sunrise and sunset that day. Weather and game days are not live yet."""
+def world_at(stats: Stats, now: datetime, forecast: Forecast | None = None,
+             games: tuple[Game, ...] = (), wins: tuple[str, ...] = ()) -> World:
+    """The world for real stats at a real moment. The light comes from Philadelphia's sunrise
+    and sunset that day: the forecast's when there is one, otherwise estimated, with a
+    clear sky."""
     now = now.astimezone(PHILLY)
-    sunrise, sunset = approx_sun_times(now.date())
-    return World(when=now, phase=phase_for(now, sunrise, sunset), weather="clear", stats=stats)
+    if forecast:
+        sunrise, sunset = forecast.sunrise, forecast.sunset
+        weather, temp = forecast.kind, forecast.temp_f
+    else:
+        (sunrise, sunset), weather, temp = approx_sun_times(now.date()), "clear", None
+    return World(when=now, phase=phase_for(now, sunrise, sunset), weather=weather, stats=stats,
+                 temp_f=temp, games=games, wins=wins)

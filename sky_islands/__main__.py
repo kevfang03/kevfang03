@@ -18,9 +18,11 @@ from pathlib import Path
 
 from .buttons import write_buttons
 from .clock import PHASES, PHILLY
+from .forecast import fetch_forecast
 from .github import fetch_stats, poster, token_from_env
 from .model import DEMO_STATS, demo_world, world_at
 from .render import render
+from .sports import fetch_games
 from .views import render_views
 
 # (label, phase, weather, total contributions, date) for the review gallery.
@@ -33,6 +35,11 @@ GALLERY = [
     ("Dawn, spring", "dawn", "clear", None, (2026, 4, 20)),
     ("Night, new account (12 contributions)", "night", "clear", 12, (2026, 11, 2)),
     ("Day, summer, veteran (2,400 contributions)", "day", "clear", 2400, (2026, 7, 10)),
+    ("Rain at dusk", "dusk", "rain", None, (2026, 11, 2)),
+    ("Storm at night", "night", "storm", None, (2026, 11, 2)),
+    ("Snowy day, winter", "day", "snow", None, (2027, 1, 15)),
+    ("Foggy dawn", "dawn", "fog", None, (2026, 11, 2)),
+    ("Overcast day", "day", "cloudy", None, (2026, 11, 2)),
 ]
 
 
@@ -62,11 +69,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "live":
         now = datetime.now(PHILLY)
         stats = fetch_stats(args.login, poster(token_from_env()), now)
-        world = world_at(stats, now)
+        games, wins = fetch_games(now.date())
+        world = world_at(stats, now, fetch_forecast(), games, wins)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         svg = render(world)
         args.out.write_text(svg, encoding="utf-8")
-        print(f"wrote {args.out} ({len(svg) // 1024} KB) at {world.phase}: "
+        print(f"wrote {args.out} ({len(svg) // 1024} KB) at {world.phase}, {world.weather}: "
               f"{stats.contributions_total} contributions, {stats.streak_days}-day streak, "
               f"{len(stats.repos)} repos")
         if args.views:
