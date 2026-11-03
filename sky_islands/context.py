@@ -1,0 +1,62 @@
+"""Canvas size, shared shapes and the drawing context passed to every layer."""
+
+from __future__ import annotations
+
+import random
+from dataclasses import dataclass
+
+from . import palette as pal
+from .model import World
+from .svg import Defs, Layer
+
+W, H = 1000, 560
+HEADER_H = 54
+STRIP_Y = 522  # top of the activity timeline along the bottom
+FONT = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace"
+
+
+@dataclass
+class Ctx:
+    """The world plus the derived values and shared definitions drawing code needs."""
+
+    w: World
+    rng: random.Random
+    defs: Defs
+
+    @property
+    def phase(self) -> str:
+        return self.w.phase
+
+    @property
+    def P(self) -> dict:
+        return pal.PHASE[self.w.phase]
+
+    @property
+    def dark(self) -> bool:
+        return self.w.phase in ("dusk", "night")
+
+    def lit(self, c: str) -> str:
+        return pal.lit_by(c, self.w.phase)
+
+    def haze(self, c: str, t: float) -> str:
+        """Fade a colour toward the sky's distance colour."""
+        return pal.mix(c, self.P["haze"], t)
+
+    def glow(self, L: Layer, x: float, y: float, r: float, col: str, op: float = 1.0, **a) -> None:
+        g = self.defs.radial(f"glow{col[1:]}", [(0, col, 0.9), (0.35, col, 0.35), (1, col, 0)])
+        L.circle(x, y, r, g, opacity=op, **a)
+
+
+def sign(L: Layer, x: float, y: float, text: str, col: str = "#ece8f8", size: float = 7.5,
+         leader: float = 0) -> tuple[float, float, float, float]:
+    """A small dark label; returns its box (x0, y0, x1, y1)."""
+    w = len(text) * size * 0.6 + 10
+    if leader:
+        L.line(x, y + 4, x, y + 4 + leader, col, 0.7, opacity=0.55)
+    L.rect(x - w / 2, y - size - 1.5, w, size + 6, "#120e24", opacity=0.78, rx=3)
+    L.text(x, y + 1, text, size, col, text_anchor="middle", font_weight="700")
+    return (x - w / 2, y - size - 1.5, x + w / 2, y + 4.5)
+
+
+def sign_width(text: str, size: float = 7.5) -> float:
+    return len(text) * size * 0.6 + 10

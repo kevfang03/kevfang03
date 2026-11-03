@@ -1,0 +1,370 @@
+"""The ride: one lap around the home island, unrolled into a long strip that loops.
+
+The camera follows the train past four sides of the island, each with its own scenery
+and its own sky: the town station, the stadium bridge, the wild side, and the west
+Server Farm at sunset, then over one last bridge back into the town station. Behind the
+islands, a small hazy copy of the far side of the loop drifts the other way, so the
+places the train has passed come back round behind it. The town and stadium are drawn once for the overview and reused here
+by reference (<use>), so the ride adds little to the file size.
+"""
+
+from __future__ import annotations
+
+import itertools
+
+from . import palette as pal
+from .clock import season
+from .context import Ctx, H, W, sign
+from .island import HOME, STADIUM, Shape, crystals, draw, waterfall
+from .progress import cargo
+from .rail import _train, _truss, _viaduct, cars_for, signal, train_length
+from .serverfarm import server_farm
+from .svg import Layer
+from .world import UNLOCK, fly, level, sky_taxi, wonder
+
+RAIL_Y = 408  # the track's height on screen during the ride
+SCALE = 1.6  # the overview's islands are shown this much bigger on the ride
+PAN = 3700  # one lap: the strip repeats after this, so the ride ends where it began
+BG_DEPTH = 0.3  # the sky's distant scenery moves this fraction as fast (parallax)
+FAR_K = 0.34  # size of the far side of the loop, seen across the island
+FAR_RAIL_Y = 250  # where the far side's track sits on screen
+
+
+def _place(shape: Shape, x0: float) -> tuple[float, float]:
+    """Translate that puts an overview island's west edge at x0 and its rail on RAIL_Y."""
+    rail_in_island = shape.top + 56
+    return x0 - shape.x0 * SCALE, RAIL_Y - rail_in_island * SCALE
+
+
+HOME_AT = 380
+HOME_T = _place(HOME, HOME_AT)
+HOME_END = HOME_AT + HOME.w * SCALE
+STADIUM_AT = 1460
+STADIUM_T = _place(STADIUM, STADIUM_AT)
+STADIUM_END = STADIUM_AT + STADIUM.w * SCALE
+WILD = Shape(cx=2400, top=258, w=820, depth=330)
+FIELDS = Shape(cx=3500, top=300, w=760, depth=260)
+# Scale railway parts drawn at overview size up to the ride's size, keeping the rail height.
+TRACK_SPACE = f"translate(0 {RAIL_Y * (1 - SCALE):.1f}) scale({SCALE})"
+
+SIDES = (  # (centre x, label) for the signs that name each side as it comes into view
+    (760, "FRONT · THE TOWN"), (1600, "EAST · STADIUM BRIDGE"), (2400, "NORTH · THE WILD SIDE"),
+    (3500, "WEST · THE SERVER FARM"),
+)
+
+
+# ---------------------------------------------------------------- the wild side
+
+def _pine(L: Layer, x: float, base: float, h: float, col: str, snow: bool) -> None:
+    L.rect(x - 1, base - h * 0.25, 2, h * 0.25, "#3a2a20")
+    for k in range(3):
+        w = h * (0.42 - k * 0.1)
+        y = base - h * (0.2 + k * 0.25)
+        L.poly([(x - w, y), (x, y - h * 0.38), (x + w, y)], col)
+        if snow:
+            L.poly([(x - w * 0.3, y - h * 0.26), (x, y - h * 0.38), (x + w * 0.3, y - h * 0.26)],
+                   "#eef2f8")
+
+
+def _wild_rock(c: Ctx) -> tuple[str, str]:
+    """Mossy blue-grey stone for the wild side, still lit by the time of day."""
+    r0, r1 = c.P["rock"]
+    return pal.mix(r0, "#3e5a5c", 0.55), pal.mix(r1, "#0e1a1c", 0.5)
+
+
+def wild_side(L: Layer, c: Ctx) -> None:
+    """Cliffs and forest on the far side: jagged peaks, waterfalls, a ruin, glowing
+    crystals and mushrooms. The forest gets denser with your streak."""
+    s = WILD
+    rock = _wild_rock(c)
+    winter = season(c.w.when.month) == "winter"
+    # Jagged peaks rising behind the forest.
+    peak = pal.mix(rock[0], c.P["haze"], 0.25)
+    pts = [(s.x0 + 40, s.top + 4)]
+    x = s.x0 + 60
+    while x < s.x1 - 60:
+        pts.append((x, s.top - c.rng.uniform(40, 120)))
+        x += c.rng.uniform(40, 80)
+        pts.append((x, s.top - c.rng.uniform(10, 40)))
+        x += c.rng.uniform(20, 40)
+    pts.append((s.x1 - 40, s.top + 4))
+    L.poly(pts, peak)
+    for (x1, y1), (x2, y2) in itertools.pairwise(pts):
+        if y2 < y1 - 30:  # light the sunward slopes of the tall peaks
+            L.poly([(x1, y1), (x2, y2), (x2 + 6, y2 + 20)], c.P["rim"], opacity=0.15)
+        if winter and y2 < s.top - 70:
+            L.poly([(x2 - 10, y2 + 16), (x2, y2), (x2 + 10, y2 + 16)], "#eef2f8")
+    draw(L, c, s, "wild", style="wild")
+    crystals(L, c, s)
+    # Moss and long vines on the cliff, some flowering.
+    moss = c.lit("#3f7a4a")
+    for _ in range(26):
+        x = c.rng.uniform(s.x0 + 30, s.x1 - 30)
+        L.ellipse(x, s.ground(x) + c.rng.uniform(16, 60), c.rng.uniform(8, 18), c.rng.uniform(3, 6),
+                  moss, opacity=0.8)
+    for _ in range(16):
+        x = c.rng.uniform(s.x0 + 50, s.x1 - 50)
+        y = s.ground(x) + 14
+        ln = c.rng.uniform(60, 140)
+        L.path(f"M{x:.0f} {y:.0f}q{c.rng.uniform(-12, 12):.0f} {ln / 2:.0f} "
+               f"{c.rng.uniform(-6, 6):.0f} {ln:.0f}", stroke=moss, stroke_width=1.6)
+        if c.rng.random() < 0.5:
+            col = c.rng.choice(("#ff9fd8", "#9fe6ff", "#ffe08a"))
+            L.circle(x, y + ln, 2.4, col)
+            if c.dark:
+                c.glow(L, x, y + ln, 10, col, 0.7, class_="pulse")
+    for x in (s.x0 + 70, s.cx + 160, s.x1 - 60):
+        waterfall(L, c, s, x)
+    L.ellipse(s.cx, RAIL_Y + 70, s.w * 0.6, 26, "#ffffff", opacity=0.18, filter=c.defs.blur(12))
+    # Two rows of pines: a hazy back row and a darker front row.
+    trees = min(80, 20 + c.w.stats.streak_days * 3)
+    for row, (shade_by, hz) in enumerate(((0.75, 0.35), (1.0, 0.0))):
+        for _ in range(trees // 2):
+            x = s.x0 + 40 + (s.w - 80) * c.rng.random()
+            h = c.rng.uniform(24, 44) if row == 0 else c.rng.uniform(32, 62)
+            green = c.lit(c.rng.choice(("#24503e", "#2c5e48", "#1d4434")))
+            _pine(L, x, s.ground(x) + (0 if row == 0 else 5), h,
+                  c.haze(pal.shade(green, shade_by), hz), winter)
+    # A ruined arch and a broken tower near the cliff's edge, with glowing mushrooms.
+    stone = c.lit("#9a9aa8")
+    joint = pal.shade(stone, 0.75)
+    ax = s.x0 + 150
+    base = s.ground(ax) + 2
+    # The arch, built of dressed blocks, its keystone gone and one side crumbling.
+    L.path(f"M{ax} {base}v-46a24 24 0 0 1 20 -23.6l2 6a17 17 0 0 0 -13 16.6v47z", stone)
+    L.path(f"M{ax + 48} {base}v-46a24 24 0 0 0 -20 -23.6l-1 7a17 17 0 0 1 12 16.6v46z", stone)
+    L.path("".join(f"M{ax} {base - k * 9}h9M{ax + 39} {base - k * 9}h9" for k in range(1, 6)),
+           stroke=joint, stroke_width=0.7)
+    L.rect(ax - 3, base - 4, 54, 4, pal.shade(stone, 0.85))
+    for bx, by in ((ax + 22, base - 2), (ax + 30, base - 3), (ax + 56, base - 2)):
+        L.rect(bx, by - 3, 6, 4, pal.shade(stone, 0.9), transform=f"rotate(12 {bx} {by})")
+    # A broken tower beside it, with a slit window.
+    L.path(f"M{ax + 64} {base}V{base - 70}L{ax + 69} {base - 78}L{ax + 72} {base - 72}"
+           f"L{ax + 75} {base - 81}L{ax + 78} {base - 70}V{base}Z", stone)
+    L.path("".join(f"M{ax + 64} {base - k * 10}h14" for k in range(1, 7)), stroke=joint,
+           stroke_width=0.7)
+    L.rect(ax + 69.5, base - 52, 3, 9, "#0e1418", rx=1.5)
+    L.rect(ax + 74, base - 70, 4, 70, "#000000", opacity=0.15)
+    # Moss and ivy creeping over it all.
+    for mx, my, r in ((ax + 3, base - 40, 5), (ax + 44, base - 30, 4), (ax + 66, base - 60, 4),
+                      (ax + 20, base - 66, 3.5), (ax + 76, base - 24, 4)):
+        L.ellipse(mx, my, r, r * 0.6, moss)
+    L.path(f"M{ax + 2} {base - 10}q10 -14 2 -30M{ax + 66} {base}q6 -20 -1 -44",
+           stroke=moss, stroke_width=2)
+    if c.dark:
+        c.glow(L, ax + 24, base - 30, 30, "#9fe6ff", 0.5, class_="pulse")
+    for k in range(5):
+        mx = ax - 20 + k * 9
+        cap = "#7fe3ff" if k % 2 else "#c58bff"
+        L.rect(mx - 0.8, base - 6, 1.6, 6, c.lit("#e8e0f0"))
+        L.path(f"M{mx - 4} {base - 6}q4 -6 8 0z", cap)
+        if c.dark:
+            c.glow(L, mx, base - 7, 8, cap, 0.8, class_="pulse",
+                   style=f"animation-delay:-{k * .4:.1f}s")
+    if c.dark:
+        for _ in range(16):
+            x = c.rng.uniform(s.x0 + 40, s.x1 - 40)
+            y = s.ground(x) - c.rng.uniform(10, 70)
+            L.circle(x, y, 1.3, "#e6ff9a", class_="tw",
+                     style=f"animation-delay:-{c.rng.uniform(0, 4):.1f}s")
+
+
+def locked_nearby(L: Layer, c: Ctx) -> None:
+    """The Starport and the Sky Shrine, floating close to the wild side."""
+    for key, name, cx, top, w in (("starport", "STARPORT", 2150, 150, 150),
+                                  ("shrine", "SKY SHRINE", 2690, 128, 130)):
+        s = Shape(cx, top, w, w * 0.8)
+        g = Layer()
+        wonder(g, c, key, s, f"near-{key}", None, name)
+        locked = level(c) < UNLOCK[key]
+        sign(g, cx, top - (26 if locked else 60),
+             f"{name} · UNLOCKS AT LV {UNLOCK[key]}" if locked else name,
+             "#ffe08a" if locked else "#9fe6ff")
+        L.group(g, class_="bob", style=f"animation-duration:{5 + (cx % 3)}s")
+
+
+# ---------------------------------------------------------------- the west side: see serverfarm.py
+
+# ---------------------------------------------------------------- skies behind each side
+
+def backdrop(L: Layer, c: Ctx) -> None:
+    """Distant scenery for each side, laid out so it slides past at parallax speed."""
+    def at(k: int) -> float:  # where side k's backdrop sits so it is centred when the train is there
+        return W / 2 + (0, 1150, 1950, 3050, PAN)[k] * BG_DEPTH
+
+    # Town side: the Philly island far away.
+    for k in (0, 4):  # and again as the lap comes back round to the town
+        L.raw(f'<use href="#isl-philly" transform="translate({at(k) - 60:.0f} 150) scale(.42)" '
+              f'opacity=".55"/>')
+    # Stadium side: open sky and a few distant islands.
+    for dx, y, r in ((-120, 210, 26), (90, 180, 18), (220, 240, 30)):
+        col = c.haze(c.P["rock"][0], 0.6)
+        L.ellipse(at(1) + dx, y, r, r * 0.22, col, opacity=0.6)
+        L.path(f"M{at(1) + dx - r} {y}Q{at(1) + dx} {y + r * 1.5} {at(1) + dx + r} {y}Z", col,
+               opacity=0.6)
+    for k, (dx, y, col) in enumerate(((-160, 140, "#e2574c"), (40, 110, "#3d9bd1"),
+                                      (180, 170, "#e8b440"))):
+        b = Layer()
+        bx = at(1) + dx
+        b.ellipse(bx, y, 14, 17, c.lit(col))
+        b.ellipse(bx, y, 5, 17, "#ffffff", opacity=0.3)
+        b.line(bx - 6, y + 14, bx - 3, y + 24, "#5a4a3a", 0.7)
+        b.line(bx + 6, y + 14, bx + 3, y + 24, "#5a4a3a", 0.7)
+        b.rect(bx - 4, y + 24, 8, 5, c.lit("#8a5d42"))
+        if c.P["lamps"]:
+            c.glow(b, bx, y + 20, 10, "#ffb35a", 0.7)
+        L.group(b, class_="drift", style=f"animation-delay:-{k * 9}s", opacity=0.85)
+    # Wild side: night creeps in, with a nebula, a river of stars and a sky whale.
+    x = at(2)
+    L.rect(x - 520, 0, 1040, H, c.defs.linear("wildsky", [(0, "#0a0620", 0), (0.25, "#0a0620", 0.75),
+                                                          (0.75, "#0a0620", 0.75), (1, "#0a0620", 0)],
+                                              x2=1, y2=0))
+    for k, col in enumerate(("#c04aff", "#3ad1ff", "#ff6ab4", "#7a6aff")):
+        L.ellipse(x - 300 + k * 190, 140 + (k % 2) * 70, 170, 60, col, opacity=0.18,
+                  filter=c.defs.blur(28))
+    L.ellipse(x, 160, 420, 34, "#fff6e0", opacity=0.16, filter=c.defs.blur(10),
+              transform=f"rotate(-12 {x:.0f} 160)")
+    for _ in range(120):
+        sx, sy = x + c.rng.uniform(-480, 480), c.rng.uniform(50, 380)
+        L.circle(sx, sy, c.rng.choice((0.6, 0.8, 1.1)), "#ffffff", opacity=0.85)
+    L.raw(f'<g opacity=".5"><path d="M0 0q34 -16 80 -5q16 5 28 0l12 -9l-2 11l9 7l-14 -2q-16 7 -34 7'
+          f'q-46 2 -79 -9z" fill="#3a2f7a"/><circle cx="18" cy="-1" r="1.4" fill="#9fd8ff"/>'
+          f'<circle cx="34" cy="2" r="1.2" fill="#9fd8ff"/><circle cx="50" cy="3" r="1.2" fill="#9fd8ff"/>'
+          f'<animateMotion dur="40s" repeatCount="indefinite" '
+          f'path="M{x + 260:.0f} 120Q{x:.0f} 90 {x - 300:.0f} 140"/></g>')
+    # West side: the sun going down over far mountains.
+    x = at(3)
+    L.rect(x - 520, 0, 1100, H, c.defs.linear("westsky", [(0, "#ff9a60", 0), (0.3, "#ff9a60", 0.35),
+                                                          (1, "#ff7a50", 0.45)], x2=1, y2=0))
+    c.glow(L, x + 140, 330, 260, "#ffcf7a", 0.75)
+    L.circle(x + 140, 330, 34, "#ffe6b0")
+    L.poly([(x - 500, 400), (x - 380, 300), (x - 260, 360), (x - 120, 280), (x + 20, 350), (x + 160, 290),
+            (x + 320, 360), (x + 560, 320), (x + 560, 420), (x - 500, 420)],
+           c.haze(c.P["rock"][0], 0.55), opacity=0.8)
+
+
+# ---------------------------------------------------------------- the track and the train
+
+def _suspension(L: Layer, c: Ctx, a: float, b: float, y: float) -> None:
+    """A suspension bridge: two towers, main cables sagging between them, hangers to the deck."""
+    steel, cable = c.lit("#8a8fa8"), c.lit("#c9c4dc")
+    t1, t2 = a + 14, b - 14
+    top = y - 70
+    L.rect(a, y, b - a, 3, steel)
+    L.rect(a, y + 3, b - a, 2, "#000000", opacity=0.3)
+    for tx in (t1, t2):
+        L.rect(tx - 3, top, 6, y - top + 26, steel)
+        for z in (top + 8, top + 30, y - 16):
+            L.rect(tx - 5, z, 10, 2.4, steel)
+        L.line(tx - 3, top, tx - 3, y + 26, c.P["rim"], 0.6, opacity=0.6)
+        L.circle(tx, top - 2, 1.8, "#ff4d4d", class_="av")
+    for start, end, sag in ((a, t1, top + 40), (t1, t2, y - 10), (t2, b, top + 40)):
+        L.path(f"M{start} {y if start == a else top}Q{(start + end) / 2} {sag} {end} "
+               f"{y if end == b else top}", stroke=cable, stroke_width=1.2)
+    n = int((t2 - t1) // 7)
+    for k in range(1, n):
+        x = t1 + (t2 - t1) * k / n
+        u = (x - t1) / (t2 - t1)
+        cy = (1 - u) ** 2 * top + 2 * (1 - u) * u * (y - 10) + u ** 2 * top
+        L.line(x, cy, x, y, cable, 0.5, opacity=0.8)
+    if c.P["lamps"]:
+        for k in range(1, 6):
+            x = t1 + (t2 - t1) * k / 6
+            L.circle(x, y - 3, 1.2, "#ffd27a")
+            c.glow(L, x, y - 3, 6, "#ffd27a", 0.6)
+
+
+def track(L: Layer, c: Ctx) -> None:
+    """The railway all the way round: viaducts on the cliffs, steel bridges between.
+    Drawn at the overview's size and then scaled up to match the enlarged islands."""
+    y, s = RAIL_Y, SCALE
+    g = Layer()
+    _viaduct(g, c, (HOME_AT + 10) / s, (HOME_END - 10) / s, y)
+    _suspension(g, c, (HOME_END - 10) / s, (STADIUM_AT + 10) / s, y)
+    _viaduct(g, c, (STADIUM_AT + 10) / s, (STADIUM_END - 10) / s, y)
+    _truss(g, c, (STADIUM_END - 10) / s, (WILD.x0 + 10) / s, y)
+    _viaduct(g, c, (WILD.x0 + 10) / s, (WILD.x1 - 10) / s, y)
+    _truss(g, c, (WILD.x1 - 10) / s, (FIELDS.x0 + 10) / s, y)
+    _viaduct(g, c, (FIELDS.x0 + 10) / s, (FIELDS.x1 - 10) / s, y)
+    _truss(g, c, (FIELDS.x1 - 10) / s, (PAN + HOME_AT + 10) / s, y)  # back to the town
+    g.line(HOME_AT / s, y - 1, (PAN + HOME_AT) / s, y - 1, "#2a2230", 1.2)
+    g.line(HOME_AT / s, y - 1.7, (PAN + HOME_AT) / s, y - 1.7, c.P["rim"], 0.5, opacity=0.5)
+    # Signals where the line leaves each island for a bridge: green one way, red the other.
+    for k, x in enumerate((HOME_END, STADIUM_AT, STADIUM_END, WILD.x0, WILD.x1, FIELDS.x0,
+                           FIELDS.x1)):
+        signal(g, c, x / s + (-6 if k % 2 == 0 else 6), y, green=k % 2 == 0)
+    # Town station: where the train waits when the ride begins.
+    length = train_length(cars_for(c))
+    nose = _nose_x(length)
+    x0, x1 = (nose - length * s - 20) / s, (nose + 20) / s
+    g.rect(x0, y + 1, x1 - x0, 5, c.lit("#b8aa94"))
+    for x in (x0 + 8, (x0 + x1) / 2, x1 - 8):
+        g.line(x, y + 1, x, y - 22, c.lit("#3a3050"), 1.4)
+    g.poly([(x0 - 5, y - 22), (x1 + 5, y - 22), (x1, y - 28), (x0, y - 28)], c.lit("#5a4a6a"))
+    if c.P["lamps"]:
+        for x in (x0 + 16, x1 - 16):
+            c.glow(g, x, y - 20, 14, "#ffd27a", 0.7)
+    L.group(g, transform=TRACK_SPACE)
+    sign(L, nose - length * s / 2, y - 56, "TOWN STATION", "#ffd27a")
+
+
+def _nose_x(length: float) -> float:
+    """Where the train's nose stays during the ride, so the whole train is centred."""
+    return W / 2 + length * SCALE / 2
+
+
+def train(c: Ctx) -> Layer:
+    cars = cars_for(c)
+    g = Layer()
+    g.group(_train(c, RAIL_Y, cars, cargo(c.w.stats), moving=True),
+            transform=f"translate({_nose_x(train_length(cars)):.0f} {RAIL_Y * (1 - SCALE):.1f}) "
+                      f"scale({SCALE})")
+    return g
+
+
+def town_traffic(L: Layer, c: Ctx) -> None:
+    """Sky taxis buzzing around the town as the train leaves the station."""
+    routes = ((f"M{HOME_AT - 80} 230Q{HOME_AT + 300} 150 {HOME_END + 60} 210", 11, 0),
+              (f"M{HOME_END + 40} 170Q{HOME_AT + 500} 110 {HOME_AT + 40} 160", 13, -5),
+              (f"M{HOME_AT + 200} 120Q{HOME_AT + 600} 200 {STADIUM_AT + 200} 150", 15, -9))
+    for (path, dur, begin), left in zip(routes, (False, True, False), strict=True):
+        fly(L, sky_taxi(c, 1.4, left), path, dur, begin)
+
+
+def far_side(L: Layer) -> None:
+    """The far side of the loop, seen across the island: the same strip, small and mirrored,
+    placed so the point opposite the train is centred. It drifts right as the world slides
+    left, so whatever the train passes comes back round behind it."""
+    x0 = W / 2 + FAR_K * (W / 2 + PAN / 2)
+    y0 = FAR_RAIL_Y - RAIL_Y * FAR_K
+    for n in (0, 1):
+        L.raw(f'<use href="#ride-strip" transform="translate({x0 - n * FAR_K * PAN:.0f} '
+              f'{y0:.0f}) scale({-FAR_K} {FAR_K})"/>')
+
+
+def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer]:
+    """The ride's distant backdrop, the far side of the loop, and the world strip."""
+    bg, far, world = Layer(), Layer(), Layer()
+    backdrop(bg, c)
+    far_side(far)
+    for k in range(5):
+        world.raw(f'<use href="#clouds" transform="translate({k * W - 120} -30)"/>')
+    strip = Layer()
+    locked_nearby(strip, c)
+    strip.raw(f'<use href="#isl-home" transform="translate({HOME_T[0]:.1f} {HOME_T[1]:.1f}) '
+              f'scale({SCALE})"/>')
+    strip.raw(f'<use href="#isl-stadium" transform="translate({STADIUM_T[0]:.1f} {STADIUM_T[1]:.1f}) '
+              f'scale({SCALE})"/>')
+    town_traffic(strip, c)
+    wild_side(strip, c)
+    server_farm(strip, c, FIELDS)
+    track(strip, c)
+    for x, text in SIDES:
+        sign(strip, x, 506, text, "#ffffff", 9)
+    world.group(strip, id="ride-strip")
+    # The strip again a lap before and a lap after, so the track runs on unbroken: the
+    # Server Farm and the bridge home sit left of the station, and the ride ends where it began.
+    for lap in (-PAN, PAN):
+        world.raw(f'<use href="#ride-strip" transform="translate({lap} 0)"/>')
+    return bg, far, world
+
