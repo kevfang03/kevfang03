@@ -12,6 +12,43 @@
 <a href="https://github.com/kevfang03/kevfang03/blob/main/views/level-10.md"><img src="assets/buttons/level-10.svg" alt="Lv 10 preview"></a>
 </p>
 
+### Hi, I'm Kevin
+
+I study computer science and work on a university IT service desk, so I build the tools I
+wish the desk had: automation that takes the repetitive work off people and is safe to point
+at real student data. Read-only access, plain rules before any AI, and answers that show
+their sources.
+
+### Featured projects
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<a href="https://github.com/kevfang03/tdx-queue-auditor"><img src="https://raw.githubusercontent.com/kevfang03/tdx-queue-auditor/main/docs/img/demo-card.png" alt="A Microsoft Teams shift summary card listing demo tickets grouped by what the help desk should do next"></a>
+<h4><a href="https://github.com/kevfang03/tdx-queue-auditor">TDX queue auditor</a></h4>
+Checks a help desk's ticket queue for stale and stuck tickets with plain, testable rules, then
+posts a shift summary card to the desk's Teams chat. Read-only, and no AI unless you turn it on.
+<br><sub>Python · Playwright · Teams Workflows · optional Claude API</sub>
+</td>
+<td width="50%" valign="top">
+<a href="https://github.com/kevfang03/scis-help-assistant"><img src="https://raw.githubusercontent.com/kevfang03/scis-help-assistant/main/docs/img/demo.gif" alt="A chat bubble answering a student's VPN question with numbered links to the support pages it used"></a>
+<h4><a href="https://github.com/kevfang03/scis-help-assistant">SCIS help assistant</a></h4>
+A chat assistant that answers students' IT questions from public support pages, cites every
+page it used, and says so when a question isn't covered instead of guessing.
+<br><sub>Python · FastAPI · hybrid search (BM25 + embeddings) · Claude API</sub>
+</td>
+</tr>
+</table>
+
+<p align="center">
+<img src="https://img.shields.io/badge/Python-17123a?style=for-the-badge&logo=python&logoColor=ffd27a" alt="Python">
+<img src="https://img.shields.io/badge/Claude_API-17123a?style=for-the-badge&logo=claude&logoColor=ffd27a" alt="Claude API">
+<img src="https://img.shields.io/badge/Playwright-17123a?style=for-the-badge" alt="Playwright">
+<img src="https://img.shields.io/badge/FastAPI-17123a?style=for-the-badge&logo=fastapi&logoColor=ffd27a" alt="FastAPI">
+<img src="https://img.shields.io/badge/GitHub_Actions-17123a?style=for-the-badge&logo=githubactions&logoColor=ffd27a" alt="GitHub Actions">
+<img src="https://img.shields.io/badge/pytest-17123a?style=for-the-badge&logo=pytest&logoColor=ffd27a" alt="pytest">
+</p>
+
 <details>
 <summary>How the sky islands work</summary>
 
