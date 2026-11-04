@@ -24,14 +24,14 @@ their sources.
 <table>
 <tr>
 <td width="50%" valign="top">
-<a href="https://github.com/kevfang03/tdx-queue-auditor"><img src="https://raw.githubusercontent.com/kevfang03/tdx-queue-auditor/main/docs/img/demo-card.png" alt="A Microsoft Teams shift summary card listing demo tickets grouped by what the help desk should do next"></a>
+<a href="https://github.com/kevfang03/tdx-queue-auditor"><img src="assets/social/social-tdx-queue-auditor.png" alt="TDX queue auditor: a demo Teams shift summary card listing tickets grouped by what the help desk should do next"></a>
 <h4><a href="https://github.com/kevfang03/tdx-queue-auditor">TDX queue auditor</a></h4>
 Checks a help desk's ticket queue for stale and stuck tickets with plain, testable rules, then
 posts a shift summary card to the desk's Teams chat. Read-only, and no AI unless you turn it on.
 <br><sub>Python · Playwright · Teams Workflows · optional Claude API</sub>
 </td>
 <td width="50%" valign="top">
-<a href="https://github.com/kevfang03/scis-help-assistant"><img src="https://raw.githubusercontent.com/kevfang03/scis-help-assistant/main/docs/img/demo.gif" alt="A chat bubble answering a student's VPN question with numbered links to the support pages it used"></a>
+<a href="https://github.com/kevfang03/scis-help-assistant"><img src="assets/social/social-scis-help-assistant.png" alt="SCIS help assistant: the chat widget answering a VPN question with a numbered source link"></a>
 <h4><a href="https://github.com/kevfang03/scis-help-assistant">SCIS help assistant</a></h4>
 A chat assistant that answers students' IT questions from public support pages, cites every
 page it used, and says so when a question isn't covered instead of guessing.
