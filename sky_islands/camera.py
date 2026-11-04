@@ -97,6 +97,43 @@ def _trail() -> str:
     return keyframes("trail", [*frames, (100, "opacity:1")])
 
 
+STOP_NAMES = {"stadium": "STADIUM", "wild": "THE WILDWOOD", "farm": "SERVER FARM"}
+
+
+def board() -> list[tuple[str, list[tuple[float, float]]]]:
+    """The departure board in the bottom bar: each message and the parts of the loop
+    (percent from, to) when it shows, so it always names where the train is heading."""
+    town = "TOWN STATION"
+    out = [("THE CLOUDLINER › ALL ABOARD", [(0, FADE_IN[1]), (FADE_OUT[1], 100)]),
+           (f"DEPARTING › {town}", [(FADE_IN[1], RIDE[0] + 1)])]
+    t = RIDE[0] + 1
+    for s in schedule():
+        name = STOP_NAMES[s.key]
+        out += [(f"NEXT STOP › {name}", [(t, s.arrive)]),
+                (f"NOW AT › {name}", [(s.arrive, s.depart)])]
+        t = s.depart
+    out.append((f"NEXT STOP › {town}", [(t, FADE_OUT[1])]))
+    return out
+
+
+def _board_css() -> str:
+    """Each message switches on and off at once (step-end holds a keyframe's value until
+    the next one), so exactly one shows at any moment."""
+    out = []
+    for k, (_, spans) in enumerate(board()):
+        frames = {0.0: "opacity:0"}
+        for _, b in spans:
+            frames[b] = "opacity:0"
+        for a, _ in spans:
+            frames[a] = "opacity:1"
+        frames[100.0] = frames[0.0]
+        out.append(keyframes(f"b{k}", sorted(frames.items())))
+        # Without motion only the first message (the overview's) shows.
+        hide = "opacity:0;" if k else ""
+        out.append(f".b{k}{{{hide}animation:b{k} {LOOP_S}s step-end infinite}}")
+    return "".join(out)
+
+
 def css(timeline: tuple[float, float] | None = None) -> str:
     """CSS for the overview and ride layers, the fade and the timeline's progress marker."""
     out = [
@@ -115,6 +152,7 @@ def css(timeline: tuple[float, float] | None = None) -> str:
             (FADE_OUT[2], "opacity:0"), (100, "opacity:0"),
         ]),
         f".fade{{opacity:0;animation:fade {LOOP_S}s linear infinite}}",
+        _board_css(),
     ]
     if timeline:
         x0, x1 = timeline

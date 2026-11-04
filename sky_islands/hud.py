@@ -104,8 +104,9 @@ def _heat(n: int, peak: int) -> str:
     return "#0e6b33" if t < 0.25 else "#1f9a46" if t < 0.5 else "#2fc35a" if t < 0.75 else "#5ff07e"
 
 
-def timeline(L: Layer, c: Ctx) -> tuple[float, float] | None:
-    """The last 26 weeks as a route map: one stop per week, bigger and brighter when busier.
+def timeline(L: Layer, c: Ctx, board: list[str] = ()) -> tuple[float, float] | None:
+    """The last 26 weeks as a route map: one stop per week, bigger and brighter when busier,
+    with a little Cloudliner riding it and a departure board naming the next stop.
     Returns where the ride's progress marker travels, if there is a route to travel."""
     st = c.w.stats
     weeks = st.weekly[-26:]
@@ -130,14 +131,53 @@ def timeline(L: Layer, c: Ctx) -> tuple[float, float] | None:
         now = x0 + (len(weeks) - 1) * step
         L.circle(now, mid, 8, "none", stroke="#ffd27a", stroke_width=1.4, class_="flick")
         L.text(now + 12, mid + 3, "NOW", 7.5, "#ffd27a", font_weight="700", class_="fine")
-        # A little train that rides along the route while the camera follows the real one.
-        m = Layer()
-        m.rect(-14, mid - 15, 14, 6, "#efe6f2", rx=2)
-        m.path(f"M0 {mid - 15}q5 1 6 6h-6z", "#c9473f")
-        m.rect(-11, mid - 14, 8, 2, "#ffd98a")
-        L.group(m, class_="marker", transform=f"translate({now:.0f} 0)")
-    L.text(W - 20, mid - 3, f"{st.merged_prs} PRs merged · {sum(r.stars for r in st.repos)} stars",
-           8, "#d6cfee", text_anchor="end", font_weight="700", class_="fine")
-    commit = st.latest_commit if len(st.latest_commit) <= 34 else st.latest_commit[:33] + "…"
-    L.text(W - 20, mid + 9, f"latest: {commit}", 8, "#8b86a8", text_anchor="end", class_="fine")
+        L.group(_mini_liner(mid), class_="marker", transform=f"translate({now:.0f} 0)")
+    # The departure board: one message per part of the loop, switched by the camera's CSS.
+    b = Layer()
+    for k, text in enumerate(board):
+        b.text(W - 20, mid - 3, text, 8, "#ffd27a", text_anchor="end", font_weight="700",
+               letter_spacing=0.6, class_=f"b{k}")
+    L.group(b, class_="fine")
+    L.text(W - 20, mid + 9, _last_push(c), 8, "#8b86a8", text_anchor="end", class_="fine")
     return (x0, now) if weeks else None
+
+
+def _mini_liner(mid: float) -> Layer:
+    """The Cloudliner in miniature, nose at x=0 and wheels on the route line: an ivory
+    locomotive and one coach with a sky-blue band and a lit headlamp."""
+    m = Layer()
+    top, base = mid - 10, mid - 2.5
+    m.rect(-31, top + 1, 14, base - top - 1, "#efe9dc", rx=1.5)  # coach
+    m.path(f"M-16 {top}h9q6 0 7 {base - top}h-16z", "#efe9dc")  # locomotive and nose
+    m.path(f"M-30 {top + 2.6}h12M-15 {top + 2.6}h7", stroke="#2b4a6e", stroke_width=1.8)
+    m.path(f"M-31 {base - 2.4}h31", stroke="#5fb4e8", stroke_width=1.3)  # the cloud band
+    m.path(f"M-28 {base + 1}h0M-20 {base + 1}h0M-13 {base + 1}h0M-4 {base + 1}h0",
+           stroke="#1a1430", stroke_width=2.4, stroke_linecap="round")  # wheels
+    m.circle(-0.6, base - 1.4, 2.6, "#ffe9a8", opacity=0.35)
+    m.circle(-0.6, base - 1.4, 0.9, "#fff6d8")
+    return m
+
+
+def _ago(then: datetime, now: datetime) -> str:
+    mins = max(0, int((now - then).total_seconds() // 60))
+    if mins < 60:
+        return "just now" if mins < 2 else f"{mins}m ago"
+    if mins < 48 * 60:
+        return f"{mins // 60}h ago"
+    return f"{mins // 1440}d ago"
+
+
+def _last_push(c: Ctx) -> str:
+    """Pull requests and stars when there are any, and which repo was pushed to last."""
+    st = c.w.stats
+    bits = []
+    if st.merged_prs:
+        bits.append(f"{st.merged_prs} PR{'s' if st.merged_prs != 1 else ''} merged")
+    stars = sum(r.stars for r in st.repos)
+    if stars:
+        bits.append(f"{stars} star{'s' if stars != 1 else ''}")
+    if st.repos:
+        r = max(st.repos, key=lambda r: r.pushed_at)
+        name = r.name if len(r.name) <= 24 else r.name[:23] + "…"
+        bits.append(f"last push {name} · {_ago(r.pushed_at, c.w.when)}")
+    return " · ".join(bits)

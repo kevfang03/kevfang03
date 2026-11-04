@@ -97,6 +97,11 @@ there, and a sign over each platform shows the number that builds that place:
 
 The town's station master waves the train off and back in.
 
+The bottom bar is a route map of the last 26 weeks, one stop per week, with a miniature
+Cloudliner riding it in step with the real train. A departure board beside it names where the
+train is heading ("NEXT STOP › STADIUM", "NOW AT › THE WILDWOOD"), and under it the merged
+pull requests and stars (only when there are any) and the repo pushed to last, with how long ago.
+
 ## Living world
 
 - **Time:** Philly time picks dawn, day, golden hour, dusk or night, from real sunrise and sunset.

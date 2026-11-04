@@ -214,3 +214,29 @@ def test_server_farm_racks_follow_this_years_contributions():
     assert rack_count(0) == 3  # a few racks are always there
     assert rack_count(RACKS_PER * 8) == 8
     assert rack_count(10**6) == MAX_RACKS
+
+
+def test_departure_board_names_each_stop_in_order():
+    import itertools
+
+    from sky_islands import camera
+
+    texts = [text for text, _ in camera.board()]
+    assert texts[0] == "THE CLOUDLINER › ALL ABOARD"
+    assert texts[1:] == ["DEPARTING › TOWN STATION",
+                         "NEXT STOP › STADIUM", "NOW AT › STADIUM",
+                         "NEXT STOP › THE WILDWOOD", "NOW AT › THE WILDWOOD",
+                         "NEXT STOP › SERVER FARM", "NOW AT › SERVER FARM",
+                         "NEXT STOP › TOWN STATION"]
+    # The spans cover the loop exactly once, so one message shows at a time.
+    spans = sorted(span for _, group in camera.board() for span in group)
+    assert spans[0][0] == 0 and spans[-1][1] == 100
+    assert all(a[1] == b[0] for a, b in itertools.pairwise(spans))
+    css = camera.css((150, 650))
+    assert all(f"@keyframes b{k}" in css for k in range(len(texts)))
+
+
+def test_bar_hides_zero_counts_and_names_the_last_push():
+    svg = render(demo_world("day"))
+    assert "last push " in svg and "latest:" not in svg
+    assert "0 PRs merged" not in svg and " 0 stars" not in svg

@@ -183,7 +183,7 @@ def render(w: World) -> str:
                                    r=0.75))
     L.rect(0, 0, W, H, "#05040f", class_="fade")
     hud.header(L, c, ev.headline())
-    marker_span = hud.timeline(L, c)
+    marker_span = hud.timeline(L, c, [text for text, _ in camera.board()])
     L.rect(0, 0, W, H, "#808080", filter=defs.grain(), opacity=0.06)
     card = defs.clip("card", f'<rect width="{W}" height="{H}" rx="14"/>')
 
