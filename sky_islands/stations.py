@@ -44,16 +44,19 @@ def _centre(s: Stop) -> float:
 
 # ---------------------------------------------------------------- the stadium
 
-def _burst(col: str) -> str:
-    """One firework, centred on 0,0: rays and sparks around a bright core. An unfilled ring
+def _burst(c: Ctx, col: str) -> str:
+    """One firework, centred on 0,0: rays and sparks around a bright core. The drawing is
+    kept once and each burst takes its colour from the copy that places it. An unfilled ring
     keeps its box centred, so it grows from the middle."""
     rays = "".join(f"M{10 * dx:.1f} {10 * dy:.1f}L{32 * dx:.1f} {32 * dy:.1f}"
                    for dx, dy in _spokes(16))
     sparks = "".join(f"M{37 * dx:.1f} {37 * dy:.1f}h0" for dx, dy in _spokes(16, 0.5))
-    return (f'<circle r="39" fill="none"/>'
-            f'<path d="{rays}" stroke="{col}" stroke-width="2" stroke-linecap="round"/>'
-            f'<path d="{sparks}" stroke="{col}" stroke-width="4" stroke-linecap="round"/>'
-            f'<circle r="4.5" fill="#fff6dc"/>')
+    ref = c.defs.shape("burst", f'<circle r="39" fill="none"/>'
+                       f'<path d="{rays}" stroke="currentColor" stroke-width="2" '
+                       f'stroke-linecap="round"/>'
+                       f'<path d="{sparks}" stroke="currentColor" stroke-width="4" '
+                       f'stroke-linecap="round"/><circle r="4.5" fill="#fff6dc"/>')
+    return f'<use href="{ref}" color="{col}"/>'
 
 
 def _spokes(n: int, turn: float = 0.0) -> list[tuple[float, float]]:
@@ -81,7 +84,7 @@ def _stadium(L: Layer, c: Ctx, s: Stop, css: list[str]) -> None:
             if c.P["lamps"]:
                 c.glow(L, x + dx, y, 50, cols[k], 0.0, class_=name)
             L.raw(f'<g transform="translate({x + dx:.0f} {y})"><g class="{name}">'
-                  f"{_burst(cols[k])}</g></g>")
+                  f"{_burst(c, cols[k])}</g></g>")
         text = f"STADIUM STATION · {total:,} CONTRIBUTIONS"
     else:
         # The padlock sits just above the locked stadium's ridge.

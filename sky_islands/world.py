@@ -10,7 +10,7 @@ from .context import Ctx
 from .hud import game_text
 from .island import HOME, PHILLY, STADIUM, Shape, draw, waterfall
 from .progress import level_info
-from .svg import Layer
+from .svg import Layer, Rects
 from .town import Label
 from .wonders import ship_count, shrine, starport
 
@@ -174,10 +174,12 @@ def stadium(L: Layer, c: Ctx, labels: list[Label]) -> None:
         L.line(x0 + 4 + k * 1.6, y, x1 - 4 - k * 1.6, y, c.lit("#8a84a0"), 1)
     if games:
         colors = (team["primary"], team["secondary"], "#ffffff", team["light"])
+        crowd = Rects()  # the fans in team colours, one path per colour
         for _ in range(110):
             x = c.rng.uniform(x0 + 8, x1 - 8)
             y = c.rng.uniform(base - 32, base - 6)
-            L.rect(x, y, 1.8, 1.8, c.rng.choice(colors))
+            crowd.add(x, y, 1.8, 1.8, c.rng.choice(colors))
+        L.add(crowd)
     for fx in (x0 + 2, x1 - 2):
         L.line(fx, base, fx, base - 70, c.lit("#5a5470"), 2)
         L.rect(fx - 8, base - 76, 16, 6, "#f2fff8" if games else c.lit("#9a94b0"))

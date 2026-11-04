@@ -12,7 +12,7 @@ import pytest
 
 from sky_islands.buttons import BUTTONS, button_svg, write_buttons
 from sky_islands.clock import PHILLY
-from sky_islands.model import DEMO_STATS, world_at
+from sky_islands.model import DEMO_STATS, Game, world_at
 from sky_islands.progress import level_info
 from sky_islands.views import PREVIEW_LEVEL, TIMES, grown, moment, render_views
 from sky_islands.wonders import DRAGON_STREAK
@@ -74,3 +74,20 @@ def test_render_views_writes_all_five(tmp_path):
         [f"{t}.svg" for t in TIMES] + [f"level-{PREVIEW_LEVEL}.svg"])
     for p in written:
         assert p.stat().st_size < 600_000
+
+
+def test_views_show_todays_games_like_the_main_banner(tmp_path):
+    now = datetime(2026, 11, 4, 12, tzinfo=PHILLY)
+    game = Game("sixers", "BOS", datetime(2026, 11, 4, 19, 30, tzinfo=PHILLY))
+    for p in render_views(DEMO_STATS, now, tmp_path, (game,)):
+        svg = p.read_text(encoding="utf-8")
+        assert "GAME DAY" in svg and "BOS" in svg, p.name
+        assert "NO GAME TODAY" not in svg, p.name
+
+
+def test_level_10_preview_on_a_holiday_game_day_stays_small(tmp_path):
+    # The heaviest case: Christmas Eve at night, a game tonight and wins last night.
+    now = datetime(2026, 12, 24, 12, tzinfo=PHILLY)
+    game = Game("sixers", "BOS", datetime(2026, 12, 24, 19, 30, tzinfo=PHILLY))
+    for p in render_views(DEMO_STATS, now, tmp_path, (game,), ("eagles", "sixers")):
+        assert p.stat().st_size < 600 * 1024, p.name

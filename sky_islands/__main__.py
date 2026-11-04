@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
               f"{stats.contributions_total} contributions, {stats.streak_days}-day streak, "
               f"{len(stats.repos)} repos")
         if args.views:
-            written = render_views(stats, now, args.views)
+            written = render_views(stats, now, args.views, games, wins)
             print(f"wrote {len(written)} views to {args.views}")
         return 0
 

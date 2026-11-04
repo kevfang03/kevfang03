@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .clock import approx_sun_times
-from .model import Stats, world_at
+from .model import Game, Stats, world_at
 from .progress import level_threshold
 from .render import render
 from .serverfarm import MAX_RACKS, RACKS_PER
@@ -43,15 +43,20 @@ def grown(stats: Stats) -> Stats:
     )
 
 
-def render_views(stats: Stats, now: datetime, out: Path) -> list[Path]:
-    """Write dawn, day, dusk and night for today, and the level 10 preview at dusk."""
+def render_views(stats: Stats, now: datetime, out: Path, games: tuple[Game, ...] = (),
+                 wins: tuple[str, ...] = ()) -> list[Path]:
+    """Write dawn, day, dusk and night for today, and the level 10 preview at dusk. Today's
+    games and last night's wins show in every view, as on the main banner; the weather does
+    not, since the views show other times of day than now."""
     out.mkdir(parents=True, exist_ok=True)
     written = []
     for phase in TIMES:
         path = out / f"{phase}.svg"
-        path.write_text(render(world_at(stats, moment(now.date(), phase))), encoding="utf-8")
+        world = world_at(stats, moment(now.date(), phase), games=games, wins=wins)
+        path.write_text(render(world), encoding="utf-8")
         written.append(path)
     path = out / f"level-{PREVIEW_LEVEL}.svg"
-    path.write_text(render(world_at(grown(stats), moment(now.date(), "dusk"))), encoding="utf-8")
+    world = world_at(grown(stats), moment(now.date(), "dusk"), games=games, wins=wins)
+    path.write_text(render(world), encoding="utf-8")
     written.append(path)
     return written

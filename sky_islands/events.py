@@ -142,4 +142,4 @@ def fireworks(L: Layer, c: Ctx, colours: tuple[str, ...]) -> None:
                                 (380, 60))):
         col = colours[k % len(colours)]
         L.raw(f'<g transform="translate({x} {y}) scale(.8)"><g class="pop" '
-              f'style="animation-delay:-{k * 0.57:.2f}s">{_burst(col)}</g></g>')
+              f'style="animation-delay:-{k * 0.57:.2f}s">{_burst(c, col)}</g></g>')
