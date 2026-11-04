@@ -159,9 +159,11 @@ def render(w: World) -> str:
     bg, far, strip, station_css = ride.draw_world(c)
     trip = Layer()
     trip.group(bg, class_="ride-bg")
-    # Only the half of the loop across the island shows; it fades out towards the sides.
-    fade = defs.linear("farfade", [(0.12, "#ffffff", 0), (0.36, "#ffffff", 1),
-                                   (0.64, "#ffffff", 1), (0.88, "#ffffff", 0)], x2=1, y2=0)
+    # Only the stretch of the loop straight across the island shows, fading out well before
+    # the sides: an island is wide, so a wider window would still show the back of the island
+    # the train is pulling up to, sliding away behind it at the same time.
+    fade = defs.linear("farfade", [(0.28, "#ffffff", 0), (0.4, "#ffffff", 1),
+                                   (0.6, "#ffffff", 1), (0.72, "#ffffff", 0)], x2=1, y2=0)
     across = Layer()
     across.group(far, class_="ride-far")
     trip.group(across, opacity=0.5,
