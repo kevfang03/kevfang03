@@ -14,7 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from .context import W
-from .ride import BG_DEPTH, FAR_K, PAN, STOPS
+from .ride import BG_DEPTH, FAR_K, PAN, STOPS, VEIL_X, wild_night
 
 LOOP_S = 96  # seconds for one full loop
 
@@ -134,6 +134,20 @@ def _board_css() -> str:
     return "".join(out)
 
 
+def _veil() -> str:
+    """The night copies of the far cloud banks fade in as their side of the screen passes
+    under the Wildwood's night sky, so the clouds darken with the sky behind them."""
+    out = []
+    for side, x in VEIL_X:
+        def at(offset: float, x: float = x) -> str:
+            return f"opacity:{wild_night(x, offset):.2f}"
+
+        name = f"veil-{side}"
+        out.append(keyframes(name, [(0, at(0)), *_legs(at), (100, at(PAN))]))
+        out.append(f".{name}{{opacity:0;animation:{name} {LOOP_S}s infinite}}")
+    return "".join(out)
+
+
 def css(timeline: tuple[float, float] | None = None) -> str:
     """CSS for the overview and ride layers, the fade and the timeline's progress marker."""
     out = [
@@ -153,6 +167,7 @@ def css(timeline: tuple[float, float] | None = None) -> str:
         ]),
         f".fade{{opacity:0;animation:fade {LOOP_S}s linear infinite}}",
         _board_css(),
+        _veil(),
     ]
     if timeline:
         x0, x1 = timeline

@@ -29,6 +29,8 @@ PAN = 3700  # one lap: the strip repeats after this, so the ride ends where it b
 BG_DEPTH = 0.3  # the sky's distant scenery moves this fraction as fast (parallax)
 FAR_K = 0.34  # size of the far side of the loop, seen across the island
 FAR_RAIL_Y = 250  # where the far side's track sits on screen
+WILD_NIGHT, WILD_NIGHT_A = "#0a0620", 0.7  # the Wildwood's night sky: colour and strength
+WILD_SKY_X, WILD_SKY_W = W / 2 + 1950 * BG_DEPTH, 1640  # its centre on the backdrop, and width
 
 
 def _place(shape: Shape, x0: float) -> tuple[float, float]:
@@ -477,9 +479,9 @@ def backdrop(L: Layer, c: Ctx) -> None:
     # Wild side: night creeps in, with a nebula, a river of stars and a sky whale.
     x = at(2)
     # Night fades in over a long stretch either side, so it never shows as an edge.
-    L.rect(x - 820, 0, 1640, H, c.defs.linear("wildsky", [
-        (0, "#0a0620", 0), (0.38, "#0a0620", 0.7), (0.62, "#0a0620", 0.7), (1, "#0a0620", 0)],
-        x2=1, y2=0))
+    L.rect(WILD_SKY_X - WILD_SKY_W / 2, 0, WILD_SKY_W, H, c.defs.linear("wildsky", [
+        (0, WILD_NIGHT, 0), (0.38, WILD_NIGHT, WILD_NIGHT_A), (0.62, WILD_NIGHT, WILD_NIGHT_A),
+        (1, WILD_NIGHT, 0)], x2=1, y2=0))
     for k, col in enumerate(("#c04aff", "#3ad1ff", "#ff6ab4", "#7a6aff")):
         L.ellipse(x - 300 + k * 190, 140 + (k % 2) * 70, 170, 60, col, opacity=0.18,
                   filter=c.defs.blur(28))
@@ -643,6 +645,52 @@ def far_side(L: Layer) -> None:
     for n in (0, 1):
         L.raw(f'<use href="#ride-strip" transform="translate({x0 - n * FAR_K * PAN:.0f} '
               f'{y0:.0f}) scale({-FAR_K} {FAR_K})"/>')
+
+
+def far_veil(c: Ctx) -> Layer:
+    """Cloud banks standing at both sides of the far distance. The stretches of the loop
+    that curve back towards the train would be seen edge-on behind the islands in between,
+    so the far side slides behind these clouds at the edges instead of staying in view."""
+    from .sky import _billows, _cloud_tones
+
+    body, _, light = _cloud_tones(c, 0.5)
+
+    def fill(night: bool) -> str:
+        top, mid = ((pal.mix(light, WILD_NIGHT, WILD_NIGHT_A), pal.mix(body, WILD_NIGHT, WILD_NIGHT_A))
+                    if night else (light, body))
+        # Lit along the top, thinning to nothing at the bottom so the flat base never shows.
+        return c.defs.linear(f"veil{'n' if night else ''}-{c.phase}",
+                             [(0, top), (0.3, mid), (0.75, mid, 0.6), (1, mid, 0)])
+
+    g = Layer()
+    # The Wildwood's night is painted on the distant sky, behind these clouds, so each side
+    # also has a night copy that fades in as that side of the screen darkens (see wild_night).
+    for side, (x0, x1) in (("l", (-80, 360)), ("r", (640, W + 80))):
+        banks = _billows(c, x0, x1, 190, 1.15) + _billows(c, x0 + 40, x1 - 40, 236, 0.8)
+        # Kept once and placed twice; the outline has no fill of its own, so each copy's
+        # fill passes down to it.
+        ref = c.defs.shape(f"veil-{side}", f'<path d="{banks}"/>')
+        g.raw(f'<use href="{ref}" fill="{fill(False)}"/>')
+        g.raw(f'<use href="{ref}" fill="{fill(True)}" class="veil-{side}"/>')
+    # The inner ends dissolve into the gap, where the far side shows clearly.
+    edge = c.defs.linear("veiledge", [(0.2, "#ffffff"), (0.33, "#000000"), (0.67, "#000000"),
+                                      (0.8, "#ffffff")], x2=1, y2=0)
+    out = Layer()
+    out.group(g, mask=c.defs.mask("veilmask", f'<rect width="{W}" height="{H}" fill="{edge}"/>'))
+    return out
+
+
+VEIL_X = (("l", 160.0), ("r", 840.0))  # roughly the middle of each side's cloud banks
+
+
+def wild_night(screen_x: float, offset: float) -> float:
+    """How strongly the Wildwood's night (see backdrop) covers a point on screen when the
+    world has slid `offset` along the lap, from 0 (none) to 1 (full)."""
+    x = screen_x + offset * BG_DEPTH  # the backdrop slides at parallax speed
+    u = (x - (WILD_SKY_X - WILD_SKY_W / 2)) / WILD_SKY_W
+    if u <= 0 or u >= 1:
+        return 0.0
+    return min(1.0, u / 0.38, (1 - u) / 0.38)
 
 
 def draw_world(c: Ctx) -> tuple[Layer, Layer, Layer, str]:
